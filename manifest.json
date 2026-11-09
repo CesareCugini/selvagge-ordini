@@ -1,0 +1,17 @@
+{
+  "name": "Le Selvagge — Ordini",
+  "short_name": "Ordini Selvagge",
+  "description": "Gestione ordini uova di Le Selvagge",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#3d2e1e",
+  "theme_color": "#3d2e1e",
+  "lang": "it",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

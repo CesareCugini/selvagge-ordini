@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Selvagge — Ordini</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3d2e1e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ordini Selvagge">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#f5f0e8;--tan:#ddd4c0;--bark:#8b6e4e;--moss:#4a6741;
+  --moss-light:#6a8f60;--moss-pale:#eef3ec;--earth:#3d2e1e;
+  --straw:#c9a84c;--straw-light:#f5edcc;--rust:#a0522d;
+  --red:#c0392b;--white:#ffffff
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0ece3;color:var(--earth);font-size:13px}
+
+/* NAV */
+#nav{background:var(--earth);display:flex;align-items:stretch;height:46px;position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.nav-brand{display:flex;align-items:center;padding:0 16px;border-right:1px solid rgba(255,255,255,.1)}
+.nav-brand span{font-family:'DM Serif Display',serif;font-size:14px;color:var(--cream)}
+.nav-brand b{color:var(--straw)}
+.nav-tabs{display:flex;align-items:stretch;overflow-x:auto}
+.ntab{padding:0 14px;font-size:12px;font-weight:600;color:rgba(245,240,232,.45);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;letter-spacing:.2px}
+.ntab:hover{color:rgba(245,240,232,.8)}
+.ntab.active{color:#fff;border-bottom-color:var(--straw)}
+.nav-sync{display:flex;align-items:center;gap:6px;padding:0 14px;margin-left:auto;font-size:11px;color:rgba(245,240,232,.35)}
+#sync-dot{width:6px;height:6px;border-radius:50%;background:#6b7280}
+#sync-dot.ok{background:#4ade80}#sync-dot.saving{background:var(--straw);animation:blink .9s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* LAYOUT */
+.page{display:none;padding:14px 16px;max-width:1440px;margin:0 auto}
+.page.active{display:block}
+
+/* DAY TABS */
+.day-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.dtab{padding:5px 14px;border-radius:14px;border:1.5px solid var(--tan);background:var(--white);font-size:12px;font-weight:600;cursor:pointer;color:var(--bark);transition:.1s}
+.dtab:hover{border-color:var(--bark)}
+.dtab.active{background:var(--earth);color:#fff;border-color:var(--earth)}
+.dtab .cnt{font-size:10px;margin-left:2px;opacity:.7}
+.dtab .dd{font-size:10px;font-weight:400;opacity:.65}
+.dtab.oggi{box-shadow:0 0 0 2px var(--straw)}
+.dtab .dbell{font-size:10px;margin-left:4px;background:var(--straw);color:var(--earth);border-radius:8px;padding:0 5px}
+.week-nav{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.wk-lbl{font-family:'DM Serif Display',serif;font-size:17px;color:var(--earth);min-width:250px;text-align:center}
+.wk-mese{color:var(--bark)}
+.wk-st{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:10px}
+.wk-st.cur{background:#e3eedf;color:var(--moss)}
+.wk-st.past{background:#eee;color:#888}
+.wk-st.fut{background:#f6ecd2;color:var(--rust)}
+.badge-prom{background:var(--straw);color:var(--earth);cursor:help}
+#prom-box{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+.prom-it{display:flex;align-items:center;gap:10px;background:#fbf3dc;border:1.5px solid var(--straw);border-radius:7px;padding:6px 10px;font-size:12.5px;color:var(--earth)}
+.prom-it.fatto{background:#f4f4f2;border-color:#ddd;color:#999}
+.prom-it.fatto .pt{text-decoration:line-through}
+.prom-it .pt{flex:1}
+.prom-it .pm{font-size:10px;color:var(--bark)}
+.wk-blk{background:var(--white);border:1.5px solid var(--tan);border-radius:9px;margin-bottom:14px;overflow:hidden}
+.wk-blk>.wk-h{background:var(--earth);color:#fff;padding:8px 14px;font-family:'DM Serif Display',serif;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.wk-blk>.wk-h small{font-family:'DM Sans',sans-serif;font-size:11px;opacity:.7}
+.wd{padding:8px 14px;border-top:1px solid var(--tan)}
+.wd:first-of-type{border-top:none}
+.wd-h{font-weight:700;font-size:13px;color:var(--moss);cursor:pointer;margin-bottom:4px;display:inline-block}
+.wd-h:hover{text-decoration:underline}
+.wd-r{display:flex;gap:10px;font-size:12.5px;padding:2px 0;align-items:baseline}
+.wd-r .c{font-weight:600;min-width:260px}
+.wd-r .f{color:var(--bark);min-width:150px}
+.wd-r .n{font-style:italic;color:#7a6a55}
+.wk-sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--bark);margin:16px 0 6px}
+.wk-arch{display:flex;flex-wrap:wrap;gap:7px}
+.cl-count{font-size:14px;color:var(--earth);padding-bottom:3px}
+.cl-count b{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400}
+.cl-count span{font-size:12px;color:var(--bark)}
+.cl-count .f{margin-left:10px;background:#f6ecd2;color:var(--rust);border-radius:10px;padding:2px 8px;font-weight:600}
+.cl-flt{padding:6px 8px;border:1.5px solid var(--tan);border-radius:6px;font-size:12px;background:var(--white);color:var(--earth);font-family:'DM Sans',sans-serif}
+table.ct{width:100%;border-collapse:collapse;font-size:12.5px}
+table.ct th{background:#f0ece3;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--bark);padding:7px 10px;border-bottom:1.5px solid var(--tan)}
+table.ct td{padding:7px 10px;border-bottom:1px solid #eee6d8;vertical-align:middle}
+table.ct tbody tr{cursor:pointer}
+table.ct tbody tr:hover{background:#faf6ee}
+table.ct td.nm{font-weight:700;color:var(--earth)}
+.chip{display:inline-block;font-size:10.5px;background:#eef3ea;color:var(--moss);border-radius:10px;padding:1px 8px;margin:1px 3px 1px 0;white-space:nowrap}
+.chip b{font-weight:700}
+.chip.none{background:#f3efe7;color:#a99}
+.pers{font-size:10px;color:var(--rust);font-weight:700;margin-left:4px}
+.cl-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 140px;gap:0 12px}
+.cl-sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--bark);margin:12px 0 6px;border-top:1px solid var(--tan);padding-top:10px}
+.cl-giri{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+.cl-g{display:flex;align-items:center;gap:8px;font-size:13px;min-width:0}
+.cl-g label{width:95px;display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:var(--earth);margin:0;text-transform:none;letter-spacing:0;font-size:13px}
+.cl-g select{flex:1;min-width:0;width:100%;padding:4px 6px;border:1.5px solid var(--tan);border-radius:5px;font-size:12px;background:var(--white)}
+.cl-g select:disabled{opacity:.35}
+.cl-prezzi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 12px}
+.cl-prezzi .pz label{font-size:10px;font-weight:700;color:var(--bark);display:block;margin-bottom:2px}
+.cl-prezzi .pz div{display:flex;align-items:center;gap:4px}
+.cl-prezzi input,table.lst-t input{width:100%;padding:5px 7px;border:1.5px solid var(--tan);border-radius:5px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.cl-prezzi input.set{border-color:var(--rust);background:#fdf3ee;font-weight:700}
+table.lst-t{border-collapse:collapse;font-size:12px;width:100%}
+table.lst-t th{font-size:10px;text-transform:uppercase;color:var(--bark);padding:4px 5px;text-align:left}
+table.lst-t td{padding:3px 4px}
+table.lst-t td.pr input{width:70px;text-align:right}
+table.lst-t td.nm input{min-width:150px}
+.wk-arch button{font-size:12px}
+
+/* RIEPILOGO */
+.rb-eur{background:rgba(201,168,76,.18)}
+.rb-time{cursor:pointer}.rb-time:hover{background:rgba(255,255,255,.06)}
+tr.tot-row td{background:#f6f1e6;border-bottom:2px solid var(--tan);padding:5px 4px;font-size:13px;font-weight:700;color:var(--earth)}
+tr.tot-row td.tr-l{padding-left:10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--bark)}
+tr.tot-row td.tr-q{text-align:center}
+tr.tot-row td.tr-q.z{color:#c9bfae;font-weight:400}
+.rb-eur .rv{color:var(--straw)}
+.rbar{display:flex;gap:0;background:var(--earth);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.rb-item{padding:9px 18px;color:#fff;border-right:1px solid rgba(255,255,255,.08);flex:1;text-align:center}
+.rb-item:last-child{border-right:none}
+.rb-item .rl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;opacity:.45;display:block;margin-bottom:2px}
+.rb-item .rv{font-size:18px;font-weight:700}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:7px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
+.toolbar input[type=text]{flex:1;min-width:160px;padding:6px 11px;border:1.5px solid var(--tan);border-radius:6px;font-size:12px;background:var(--white);outline:none}
+.toolbar input[type=text]:focus{border-color:var(--bark)}
+.btn{padding:6px 13px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;line-height:1.3}
+.btn-earth{background:var(--earth);color:#fff}.btn-earth:hover{opacity:.85}
+.btn-moss{background:var(--moss);color:#fff}.btn-moss:hover{opacity:.85}
+.btn-straw{background:var(--straw);color:var(--earth)}.btn-straw:hover{opacity:.85}
+.btn-rust{background:var(--rust);color:#fff}.btn-rust:hover{opacity:.85}
+.btn-ghost{background:transparent;border:1.5px solid var(--tan);color:var(--bark)}.btn-ghost:hover{border-color:var(--bark)}
+.btn-sm{padding:3px 9px;font-size:11px}
+
+/* =====================
+   TABELLA STILE EXCEL
+   ===================== */
+.wrap-table{overflow-x:auto;background:var(--white);border-radius:9px;border:1.5px solid var(--tan);box-shadow:0 1px 4px rgba(61,46,30,.08)}
+
+table.xt{width:100%;border-collapse:collapse}
+table.xt thead th{
+  background:#f0ece3;border-bottom:2px solid var(--tan);border-right:1px solid var(--tan);
+  padding:5px 7px;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.3px;color:var(--bark);text-align:center;white-space:nowrap;
+}
+table.xt thead th.th-l{text-align:left;min-width:150px;background:#f0ece3}
+table.xt thead th.th-p{min-width:38px}
+table.xt thead th.th-n{min-width:130px;text-align:left}
+table.xt thead th.th-f{min-width:48px}
+table.xt thead th.th-tot{min-width:70px;background:#e8e0d0}
+table.xt thead th.th-imp{min-width:80px;background:#e8e0d0;text-align:right}
+table.xt thead th.th-pag{min-width:90px}
+table.xt thead th.th-lt{min-width:80px}
+table.xt thead th.th-az{min-width:60px;border-right:none}
+
+/* righe */
+table.xt tbody tr{border-bottom:1px solid #ede8de}
+table.xt tbody tr:last-child{border-bottom:none}
+table.xt tbody tr:hover{background:#faf7f1}
+table.xt tbody tr.ha-ord{background:#f2f8f0}
+table.xt tbody tr.ha-ord:hover{background:#ecf6e8}
+table.xt tbody tr.fp-row td.td-cl{border-left:3px solid var(--straw)}
+table.xt tbody tr.st-row td.td-cl{border-left:3px solid var(--moss-light)}
+
+table.xt td{padding:4px 7px;border-right:1px solid #ede8de;vertical-align:middle}
+table.xt td:last-child{border-right:none}
+table.xt td.td-cl{font-weight:600;white-space:normal;min-width:200px;max-width:280px;line-height:1.25;padding-left:10px}
+.ha-ord td.td-cl{background:#f2f8f0}
+table.xt td.td-p{text-align:center;font-size:11px;font-weight:700;color:var(--bark)}
+table.xt td.td-n{padding:3px 5px}
+
+/* note conf: sotto il nome */
+.sub-nc{font-size:10px;color:var(--rust);font-style:italic;font-weight:400;display:block;white-space:normal;line-height:1.3;margin-top:1px}
+/* badge fp/stampato */
+.badge{font-size:9px;border-radius:3px;padding:1px 4px;font-weight:700;margin-left:4px;vertical-align:middle}
+.badge-fp{background:var(--straw-light);color:var(--rust)}
+.badge-st{background:var(--moss-pale);color:var(--moss)}
+.badge-hid{background:#e5e7eb;color:#9ca3af}
+table.xt tbody tr.hid-row td{opacity:.35}
+table.xt tbody tr.hid-row td.td-cl{opacity:1;color:#aaa;font-weight:400}
+table.xt tbody tr.hid-row{background:#fafafa}
+
+/* input quantità */
+input.qin{
+  width:42px;text-align:center;border:1.5px solid transparent;border-radius:4px;
+  padding:2px 1px;font-size:13px;font-weight:700;color:var(--earth);background:transparent;outline:none;
+  font-family:'DM Sans',sans-serif
+}
+input.qin:hover{border-color:var(--tan);background:var(--white)}
+input.qin:focus{border-color:var(--bark);background:var(--white)}
+input.qin.vv{background:var(--moss-pale);border-color:var(--moss-light);color:var(--moss)}
+td.qty-cell{text-align:center;padding:3px 4px}
+
+/* totale plateau */
+td.td-tot{font-weight:700;font-size:13px;text-align:right;white-space:nowrap;background:#f8f4ed;padding-right:10px}
+td.td-tot.zero{color:#bbb;font-weight:400}
+td.td-tot.pos{color:var(--moss)}
+/* importo */
+td.td-imp{font-weight:700;font-size:13px;text-align:right;white-space:nowrap;background:#f8f4ed;padding-right:10px;color:var(--earth)}
+td.td-imp.zero{color:#bbb;font-weight:400}
+/* pagamento */
+select.psel{
+  width:100%;border:1.5px solid transparent;border-radius:4px;padding:2px 4px;
+  font-size:11px;background:transparent;outline:none;cursor:pointer;color:var(--earth);
+  font-family:'DM Sans',sans-serif
+}
+select.psel:hover,select.psel:focus{border-color:var(--tan);background:var(--white)}
+select.psel.contanti{color:var(--moss);font-weight:600}
+select.psel.bonifico{color:var(--bark);font-weight:600}
+select.psel.assegno{color:var(--rust);font-weight:600}
+select.psel.POS{color:#5b7fa6;font-weight:600}
+
+/* note ordine inline */
+input.nin{
+  width:100%;border:1.5px solid transparent;border-radius:4px;padding:2px 5px;
+  font-size:11px;color:var(--bark);background:transparent;outline:none;font-family:'DM Sans',sans-serif
+}
+input.nin:hover{border-color:var(--tan);background:var(--white)}
+input.nin:focus{border-color:var(--bark);background:var(--white)}
+input.nin.vv{color:var(--earth);font-weight:500}
+
+/* lotto select */
+select.lsel{
+  width:100%;border:1.5px solid transparent;border-radius:4px;padding:2px 4px;
+  font-size:11px;background:transparent;outline:none;cursor:pointer;color:var(--bark);
+  font-family:'DM Sans',sans-serif
+}
+select.lsel:hover,select.lsel:focus{border-color:var(--tan);background:var(--white)}
+
+/* azioni */
+td.td-az{white-space:nowrap;text-align:center}
+.gdo-box{margin-top:3px;font-size:10.5px;line-height:1.3;color:var(--earth);background:#eef3ea;border:1px solid var(--moss-light);border-radius:4px;padding:2px 5px;cursor:pointer;font-weight:600}
+.gdo-box:hover{background:#e2ecdc}
+.gdo-box.manca{background:#fbf3dc;border-color:var(--straw);color:var(--rust)}
+.gd-colli{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin:6px 0 4px}
+.gd-colli .gc label{font-size:11px;font-weight:700;color:var(--earth);display:block;margin-bottom:2px;text-transform:none;letter-spacing:0}
+.gd-colli .gc label span{font-weight:400;color:var(--bark)}
+.gd-colli input{width:100%;padding:5px 8px;border:1.5px solid var(--tan);border-radius:5px;font-size:13px}
+.selw{display:inline-flex;align-items:center;margin-right:7px;vertical-align:middle;cursor:pointer}
+.selw input{width:15px;height:15px;cursor:pointer;accent-color:var(--moss)}
+.btn.bic{padding:2px 5px;font-size:11px;min-width:0;margin:0}
+.btn.bdel:hover{background:#f5dcd2;border-color:var(--rust);color:var(--rust)}
+
+/* =====================
+   LOTTI
+   ===================== */
+h2{font-family:'DM Serif Display',serif;font-size:19px;margin-bottom:4px}
+.subtitle{font-size:11px;color:var(--bark);margin-bottom:14px}
+.lotti-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.lotto-card.uso{border-color:var(--moss);box-shadow:0 0 0 2px var(--moss-pale)}
+.lotto-card.esaurito{border-color:var(--red)}
+.lrem{font-family:'DM Serif Display',serif;font-size:34px;line-height:1;color:var(--earth)}
+.lrem small{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--bark);margin-left:4px}
+.lrem.r{color:var(--red)}.lrem.g{color:var(--rust)}
+.luova{font-size:12px;color:var(--bark);margin:3px 0 8px}
+.lbig-bar{height:10px;background:var(--tan);border-radius:5px;overflow:hidden;margin-bottom:6px}
+.lmeta{font-size:11px;color:var(--bark);display:flex;justify-content:space-between}
+.lscad{font-size:12px;font-weight:700;color:var(--moss);margin-top:1px}
+.lscad.manca{color:var(--rust)}
+.luso{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--moss);color:#fff;border-radius:10px;padding:2px 8px;margin-left:auto;white-space:nowrap}
+.lact{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.lstrip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:stretch}
+.lchip{display:flex;align-items:center;gap:10px;background:var(--white);border:1.5px solid var(--tan);border-radius:8px;padding:6px 12px;cursor:pointer;min-width:190px}
+.lchip:hover{border-color:var(--bark)}
+.lchip.uso{border-color:var(--moss);background:#f2f8f0}
+.lchip.r{border-color:var(--red);background:#fdf0ee}
+.lchip .ln{font-size:12px;font-weight:700;color:var(--earth)}
+.lchip .ls{font-size:10px;color:var(--bark)}
+.lchip .lv{font-family:'DM Serif Display',serif;font-size:22px;color:var(--earth);margin-left:auto;line-height:1}
+.lchip.r .lv{color:var(--red)}
+.lchip .lv small{font-family:'DM Sans',sans-serif;font-size:10px;color:var(--bark);margin-left:2px}
+.lchip-add{border-style:dashed;color:var(--bark);font-size:12px;font-weight:600;justify-content:center;min-width:0}
+.lotto-card{background:var(--white);border-radius:9px;border:1.5px solid var(--tan);padding:14px}
+.lotto-head{display:flex;align-items:flex-start;gap:9px;margin-bottom:12px}
+.ldot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.lnome{font-weight:700;font-size:14px}
+.lsub{font-size:11px;color:var(--bark);margin-top:1px}
+.lstock-row{display:flex;align-items:center;gap:10px;margin-top:4px}
+.lstock-label{font-size:11px;color:var(--bark);font-weight:600;width:110px}
+.lbar-wrap{flex:1;height:8px;background:var(--tan);border-radius:4px;overflow:hidden}
+.lbar{height:100%;border-radius:4px;transition:.3s}
+.lbar.v{background:var(--moss-light)}.lbar.g{background:var(--straw)}.lbar.r{background:var(--red)}
+.lstock-val{font-size:12px;font-weight:700;min-width:70px;text-align:right}
+.lstock-val.r{color:var(--red)}.lstock-val.g{color:var(--rust)}.lstock-val.v{color:var(--moss)}
+
+/* =====================
+   DASHBOARD
+   ===================== */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+.dc{background:var(--white);border-radius:9px;border:1.5px solid var(--tan);padding:13px}
+.dc label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--bark);display:block;margin-bottom:4px}
+.dc .big{font-size:24px;font-weight:700;color:var(--earth)}
+.dc .dsub{font-size:11px;color:var(--bark);margin-top:2px}
+
+/* =====================
+   MODAL
+   ===================== */
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:500;align-items:center;justify-content:center}
+.moverlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;padding:20px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.modal h3{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:14px}
+.frow{margin-bottom:9px}
+.frow label{display:block;font-size:10px;font-weight:700;color:var(--bark);margin-bottom:2px;text-transform:uppercase;letter-spacing:.2px}
+.frow input,.frow select,.frow textarea{width:100%;padding:6px 10px;border:1.5px solid var(--tan);border-radius:6px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif}
+.frow input:focus,.frow select:focus{border-color:var(--bark)}
+.frow textarea{resize:vertical;min-height:48px}
+.mactions{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
+
+
+/* riga intestazione area */
+tr.intestazione-row{background:transparent!important}
+tr.intestazione-row td{
+  background:var(--earth)!important;
+  color:var(--straw);
+  font-family:'DM Serif Display',serif;
+  font-size:11px;font-weight:400;
+  letter-spacing:1.2px;text-transform:uppercase;
+  padding:5px 14px;
+  border-top:3px solid var(--cream);
+  border-bottom:0;
+}
+tr.intestazione-row:first-child td{border-top:0}
+
+/* STAMPA */
+@media print{
+  #nav,.day-tabs,.toolbar,.rbar,.td-az,thead th{display:none!important}
+  .wrap-table{border:none;box-shadow:none}
+  .biglietto{page-break-inside:avoid;border:1px solid #000;padding:8px;margin-bottom:8px;font-family:monospace;font-size:11px}
+}
+#login{position:fixed;inset:0;z-index:2000;background:var(--earth);display:flex;align-items:center;justify-content:center;padding:16px}
+#login.ok{display:none}
+#login .lg{background:var(--cream);border-radius:14px;padding:28px 26px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#login h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:26px;color:var(--earth)}
+#login h1 b{color:var(--straw);font-weight:400}
+#login p{font-size:12px;color:var(--bark);margin:4px 0 18px}
+#login input{width:100%;padding:11px 12px;border:1.5px solid var(--tan);border-radius:8px;font-size:15px;outline:none;margin-bottom:10px;font-family:'DM Sans',sans-serif}
+#login input:focus{border-color:var(--moss)}
+#login button{width:100%;padding:11px;border:none;border-radius:8px;background:var(--moss);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+#login .err{color:var(--red);font-size:12px;min-height:16px;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="login"><form class="lg" onsubmit="event.preventDefault();accedi()">
+  <h1>Le <b>Selvagge</b></h1><p>Ordini — accesso riservato</p>
+  <input type="password" id="lg-pw" placeholder="Password" autocomplete="current-password">
+  <button type="submit">Entra</button>
+  <div class="err" id="lg-err"></div>
+</form></div>
+
+<div id="nav">
+  <div class="nav-brand"><span>Le <b>Selvagge</b> · Ordini</span></div>
+  <div class="nav-tabs">
+    <button class="ntab active" data-p="ordini" onclick="goPage('ordini')">📋 Ordini</button>
+    <button class="ntab" data-p="weekly" onclick="goPage('weekly')">🗓 Weekly base</button>
+    <button class="ntab" data-p="clienti" onclick="goPage('clienti')">👥 Clienti</button>
+    <button class="ntab" data-p="lotti" onclick="goPage('lotti')">📦 Lotti</button>
+    <button class="ntab" data-p="dash" onclick="goPage('dash')">📊 Dashboard</button>
+  </div>
+  <div class="nav-sync"><div id="sync-dot"></div><span id="sync-label">—</span></div>
+</div>
+
+<!-- ORDINI -->
+<div id="page-ordini" class="page active">
+  <div class="week-nav" id="week-nav"></div>
+  <div class="day-tabs" id="day-tabs"></div>
+  <div class="rbar" id="rbar" style="display:none"></div>
+  <div class="lstrip" id="lotti-strip"></div>
+  <div class="toolbar">
+    <input type="text" id="src" placeholder="🔍 Cerca cliente..." oninput="render()">
+    <button class="btn btn-ghost" id="btn-mostra-nasco" onclick="toggleNascosti()" style="font-size:11px">👁 Mostra nascosti</button>
+    <button class="btn btn-moss" onclick="openNuovo()">+ Nuovo cliente</button>
+    <button class="btn btn-straw" onclick="openFP()">+ Fuori programma</button>
+    <button class="btn btn-ghost" onclick="openProm('')" style="font-size:11px">🔔 Promemoria</button>
+    <button class="btn btn-ghost" onclick="openPrezzi()" style="font-size:11px">€ Listini</button>
+    <button class="btn btn-earth" onclick="openReport()">📋 Stampa report</button>
+    <button class="btn btn-earth" id="btn-stsel" onclick="stampaSelezionati()" style="display:none">🖨 Stampa selezionati (<span id="n-sel">0</span>)</button>
+    <button class="btn btn-moss" id="btn-stda" onclick="stampaTutti()" title="Stampa tutti gli ordini del giorno non ancora stampati">🖨 Stampa da stampare (<span id="n-da">0</span>)</button>
+  </div>
+  <div id="prom-box"></div>
+  <div class="wrap-table">
+    <table class="xt">
+      <thead><tr>
+        <th class="th-l">Cliente</th>
+        <th class="th-n">Note ordine</th>
+        <th class="th-f">PLAT30</th>
+        <th class="th-f">SAC4</th>
+        <th class="th-f">SAC6</th>
+        <th class="th-f">BOX4</th>
+        <th class="th-f">BOX6</th>
+        <th class="th-f">BOX10</th>
+        <th class="th-f">STOF6</th>
+        <th class="th-f">ALV7</th>
+        <th class="th-tot">Plateau</th>
+        <th class="th-imp">Importo €</th>
+        <th class="th-pag">Pagamento</th>
+        <th class="th-lt">Lotto</th>
+        <th class="th-az"></th>
+      </tr>
+      <tr class="tot-row" id="tot-row"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div id="empty" style="display:none;padding:30px;text-align:center;color:var(--bark)">Nessun cliente trovato</div>
+</div>
+
+<!-- WEEKLY BASE -->
+<div id="page-weekly" class="page">
+  <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+    <h2 style="margin:0">Weekly base</h2>
+    <button class="btn btn-ghost btn-sm" onclick="openProm('')">🔔 Nuovo promemoria</button>
+  </div>
+  <p class="subtitle">Ordini già confermati e promemoria dei prossimi giorni. Clicca su un giorno per aprirlo.</p>
+  <div id="weekly-body"></div>
+</div>
+
+<!-- CLIENTI -->
+<div id="page-clienti" class="page">
+  <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+    <h2 style="margin:0">Clienti</h2>
+    <div class="cl-count" id="cl-count"></div>
+  </div>
+  <p class="subtitle">Anagrafica dei clienti: nome, provincia, giorni e zone di consegna, listino e prezzi, pagamento abituale. Le modifiche valgono per la settimana in corso e per quelle future.</p>
+  <div class="toolbar">
+    <input type="text" id="cl-src" placeholder="🔍 Cerca cliente..." oninput="renderClienti()">
+    <select id="cl-fg" class="cl-flt" onchange="renderClienti()"></select>
+    <select id="cl-fl" class="cl-flt" onchange="renderClienti()"></select>
+    <button class="btn btn-ghost" onclick="openPrezzi()" style="font-size:11px">€ Gestisci listini</button>
+    <button class="btn btn-moss" onclick="openCliente(null)">+ Nuovo cliente</button>
+  </div>
+  <div class="wrap-table"><table class="ct" id="cl-table"></table></div>
+</div>
+
+<!-- LOTTI -->
+<div id="page-lotti" class="page">
+  <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+    <h2 style="margin:0">Lotti</h2>
+    <button class="btn btn-moss" onclick="openNuovoLotto()">+ Nuovo lotto</button>
+  </div>
+  <p class="subtitle">Le rimanenze si aggiornano da sole: ogni ordine scala le uova dal lotto assegnato. Il lotto <b>in uso</b> viene assegnato automaticamente quando inserisci una quantità.</p>
+  <div class="lotti-grid" id="lotti-grid"></div>
+  <div id="lotti-arch"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dash" class="page">
+  <h2>Dashboard settimana</h2>
+  <div class="dash-grid" id="dash-grid"></div>
+  <div id="dash-det"></div>
+</div>
+
+<!-- MODAL CONFERMA / AVVISO (interno all'app, funziona anche dove i popup del browser sono bloccati) -->
+<div class="moverlay" id="m-conf" style="z-index:600">
+  <div class="modal" style="max-width:400px">
+    <div id="cf-msg" style="font-size:14px;line-height:1.45;color:var(--earth);margin-bottom:16px"></div>
+    <div class="mactions">
+      <button class="btn btn-ghost" id="cf-annulla" onclick="chiudiConf(false)">Annulla</button>
+      <button class="btn btn-rust" id="cf-ok" onclick="chiudiConf(true)">Elimina</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TEMPI CONFEZIONAMENTO -->
+<div class="moverlay" id="m-tempi">
+  <div class="modal" style="max-width:380px">
+    <h3>Tempi di confezionamento</h3>
+    <p style="font-size:11px;color:var(--bark);margin-bottom:12px">Secondi necessari per preparare una singola confezione di ogni formato. L'app li moltiplica per le confezioni del giorno e mostra il tempo totale.</p>
+    <div id="tempi-fields"></div>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-tempi')">Annulla</button>
+      <button class="btn btn-moss" onclick="salvaTempi()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DATI GDO -->
+<div class="moverlay" id="m-gdo">
+  <div class="modal" style="max-width:460px">
+    <h3>Dati GDO — <span id="gd-nome"></span></h3>
+    <div style="display:flex;gap:12px">
+      <div class="frow" style="flex:2"><label>N. ordine</label><input type="text" id="gd-ord" autocomplete="off"></div>
+      <div class="frow" style="flex:1"><label>N. bancali</label><input type="number" min="0" step="1" id="gd-banc"></div>
+    </div>
+    <label style="font-size:11px;font-weight:700;color:var(--bark);text-transform:uppercase;letter-spacing:.4px">N. colli per confezione</label>
+    <div id="gd-colli" class="gd-colli"></div>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-gdo')">Annulla</button>
+      <button class="btn btn-moss" onclick="salvaGdo()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROMEMORIA -->
+<div class="moverlay" id="m-prom">
+  <div class="modal" style="max-width:420px">
+    <h3>Nuovo promemoria</h3>
+    <p style="font-size:11px;color:var(--bark);margin-bottom:12px">Il promemoria compare sul giorno indicato, evidenziato sulla riga del cliente, e nella pagina Weekly base.</p>
+    <div class="frow"><label>Cliente (facoltativo)</label><input type="text" id="pr-cli" list="ana-list" autocomplete="off" placeholder="Cerca cliente..."></div>
+    <div class="frow"><label>Data</label><input type="date" id="pr-data"></div>
+    <div class="frow"><label>Promemoria</label><textarea id="pr-testo" rows="3" style="width:100%;padding:6px 9px;border:1.5px solid var(--tan);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;resize:vertical" placeholder="Es. ha confermato le uova per questo martedì"></textarea></div>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-prom')">Annulla</button>
+      <button class="btn btn-moss" onclick="salvaProm()">Salva</button>
+    </div>
+  </div>
+</div>
+<datalist id="ana-list"></datalist>
+
+<!-- MODAL NUOVO CLIENTE -->
+<div class="moverlay" id="m-nuovo">
+  <div class="modal" style="max-width:420px">
+    <h3>Nuovo cliente</h3>
+    <p style="font-size:11px;color:var(--bark);margin-bottom:12px">Il cliente viene aggiunto in modo permanente al giro del giorno scelto, in fondo alla zona indicata.</p>
+    <div class="frow"><label>Nome cliente</label><input type="text" id="nc-nome" autocomplete="off"></div>
+    <div class="frow"><label>Provincia (facoltativa)</label><input type="text" id="nc-prov" maxlength="3" style="width:70px"></div>
+    <div class="frow"><label>Giorno</label><select id="nc-giorno" onchange="fillZone('nc-zona',this.value)"></select></div>
+    <div class="frow"><label>Zona</label><select id="nc-zona"></select></div>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-nuovo')">Annulla</button>
+      <button class="btn btn-moss" onclick="salvaNuovo()">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SPOSTA IN ALTRO GIORNO -->
+<div class="moverlay" id="m-sposta">
+  <div class="modal" style="max-width:420px">
+    <h3>Sposta <span id="sp-nome"></span></h3>
+    <p style="font-size:11px;color:var(--bark);margin-bottom:12px">Il cliente viene tolto dal giro di <b id="sp-da"></b> e inserito in modo permanente nel giorno scelto, in fondo alla zona indicata. L'eventuale ordine di questa settimana viene spostato con lui.</p>
+    <div class="frow"><label>Nuovo giorno</label><select id="sp-giorno" onchange="fillZone('sp-zona',this.value)"></select></div>
+    <div class="frow"><label>Zona</label><select id="sp-zona"></select></div>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-sposta')">Annulla</button>
+      <button class="btn btn-earth" onclick="salvaSposta()">Sposta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FUORI PROGRAMMA -->
+<div class="moverlay" id="m-fp">
+  <div class="modal">
+    <h3>Fuori programma</h3>
+    <div class="frow"><label>Cliente</label>
+      <input type="text" id="fp-nome" placeholder="Cerca o scrivi nome..." oninput="fpSug()" autocomplete="off">
+      <div id="fp-sug-list" style="background:#fff;border:1.5px solid var(--tan);border-radius:6px;max-height:140px;overflow-y:auto;display:none;margin-top:3px;font-size:13px"></div>
+    </div>
+    <div class="frow"><label>Provincia</label><input type="text" id="fp-prov" maxlength="3" style="width:70px"></div>
+    <div class="frow"><label>Nota confezionamento (fissa)</label><input type="text" id="fp-nc"></div>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-fp')">Annulla</button>
+      <button class="btn btn-moss" onclick="addFP()">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUOVO LOTTO -->
+<div class="moverlay" id="m-lotto">
+  <div class="modal">
+    <h3>Nuovo lotto</h3>
+    <div class="frow"><label>Nome o codice del lotto</label><input type="text" id="nl-nome" placeholder="es. P1 0911, Altobello 10/11..."></div>
+    <div class="frow"><label>Lotto (data di scadenza)</label><input type="date" id="nl-scad" style="max-width:220px"></div>
+    <div style="display:flex;gap:12px">
+      <div class="frow" style="flex:1"><label>Data arrivo</label><input type="date" id="nl-data"></div>
+      <div class="frow" style="flex:1"><label>Uova in ingresso</label><input type="number" min="0" step="1" id="nl-uova" placeholder="es. 15000"></div>
+    </div>
+    <div class="frow"><label>Note (facoltative)</label><input type="text" id="nl-note"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin:4px 0 2px;text-transform:none;letter-spacing:0;color:var(--earth);font-weight:600"><input type="checkbox" id="nl-uso" style="width:auto"> Metti subito in uso per i nuovi ordini</label>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-lotto')">Annulla</button>
+      <button class="btn btn-moss" onclick="salvaLotto()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LISTINI PREZZI -->
+<div class="moverlay" id="m-prezzi">
+  <div class="modal" style="max-width:980px;width:96%">
+    <h3>Listini prezzi</h3>
+    <p style="font-size:11px;color:var(--bark);margin-bottom:12px">Prezzo per confezione, in euro. Il listino predefinito vale per tutti i clienti a cui non è assegnato un altro listino. Nella scheda del singolo cliente puoi anche personalizzare il prezzo di un prodotto.</p>
+    <div style="overflow-x:auto"><table class="lst-t" id="listini-t"></table></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addListino()">+ Nuovo listino</button>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-prezzi')">Annulla</button>
+      <button class="btn btn-moss" onclick="salvaPrezzi()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SCHEDA CLIENTE -->
+<div class="moverlay" id="m-cliente">
+  <div class="modal" style="max-width:760px;width:96%;max-height:92vh;overflow-y:auto">
+    <h3 id="cl-tit">Cliente</h3>
+    <div class="cl-grid">
+      <div class="frow" style="grid-column:1/3"><label>Nome cliente</label><input type="text" id="cl-nome" autocomplete="off"></div>
+      <div class="frow"><label>Provincia</label><input type="text" id="cl-prov" maxlength="3"></div>
+      <div class="frow" style="grid-column:1/3"><label>Nota confezionamento (compare sul biglietto)</label><input type="text" id="cl-nc"></div>
+      <div class="frow"><label>Pagamento abituale</label><select id="cl-pag"></select></div>
+    </div>
+    <div class="cl-sec">Giorni e zone di consegna</div>
+    <div id="cl-giri" class="cl-giri"></div>
+    <div class="cl-sec">Listino e prezzi</div>
+    <div class="frow" style="max-width:300px"><label>Listino assegnato</label><select id="cl-listino" onchange="aggPlaceholderPrezzi()"></select></div>
+    <p style="font-size:11px;color:var(--bark);margin:2px 0 8px">Lascia vuoto un prezzo per usare quello del listino, mostrato in grigio. Scrivi un valore solo per i prodotti con prezzo personalizzato per questo cliente.</p>
+    <div id="cl-prezzi" class="cl-prezzi"></div>
+    <div class="mactions" style="justify-content:space-between">
+      <button class="btn btn-ghost bdel" id="cl-del" onclick="eliminaClienteAnag()">🗑 Elimina cliente</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeM('m-cliente')">Annulla</button>
+        <button class="btn btn-moss" onclick="salvaCliente()">Salva</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL STAMPA REPORT -->
+<div class="moverlay" id="m-report">
+  <div class="modal" style="max-width:440px">
+    <h3>Stampa report — <span id="rp-giorno"></span></h3>
+    <p style="font-size:11px;color:var(--bark);margin-bottom:12px">Seleziona le zone da includere nel report stampato.</p>
+    <div id="rp-zone-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm" onclick="rpSelAll(true)">Seleziona tutto</button>
+      <button class="btn btn-ghost btn-sm" onclick="rpSelAll(false)">Deseleziona tutto</button>
+    </div>
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeM('m-report')">Annulla</button>
+      <button class="btn btn-earth" onclick="stampaReport()">🖨 Stampa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT LOTTO -->
+<div class="moverlay" id="m-editlotto">
+  <div class="modal">
+    <h3>Modifica lotto</h3>
+    <input type="hidden" id="el-id">
+    <div class="frow"><label>Nome o codice del lotto</label><input type="text" id="el-nome"></div>
+    <div class="frow"><label>Lotto (data di scadenza)</label><input type="date" id="el-scad" style="max-width:220px"></div>
+    <div style="display:flex;gap:12px">
+      <div class="frow" style="flex:1"><label>Data arrivo</label><input type="date" id="el-data"></div>
+      <div class="frow" style="flex:1"><label>Uova in ingresso</label><input type="number" min="0" step="1" id="el-uova"></div>
+    </div>
+    <div class="frow"><label>Note</label><input type="text" id="el-note"></div>
+    <div class="mactions">
+      <button class="btn btn-rust btn-sm" onclick="delLotto()">Elimina</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost" onclick="closeM('m-editlotto')">Annulla</button>
+      <button class="btn btn-moss" onclick="saveEditLotto()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORKER='https://selvagge-sync.cesare-cugini.workers.dev';
+const SYNC_KEY='selvagge_ordini';
+const SYNC_TOKEN='Selv2026xK9mPqL3nR7w'; // richiesto dal server di sincronizzazione (intestazione X-Auth-Token)
+const FORMATI=['PLAT30','SAC4','SAC6','BOX4','BOX6','BOX10','STOF6','ALV7'];
+const UPF={PLAT30:30,SAC4:180,SAC6:270,BOX4:180,BOX6:270,BOX10:450,STOF6:270,ALV7:182};
+const PREZZI_DEFAULT={PLAT30:0,SAC4:0,SAC6:0,BOX4:0,BOX6:0,BOX10:0,STOF6:0,ALV7:0};
+const PAG_OPT=['','contanti','POS','assegno','bonifico','RiBa','fattura','conto corrente'];
+// ── LISTINI E ANAGRAFICA CLIENTI ─────────────────────
+// listini: [{id,nome,def,prezzi:{PLAT30:..}}] — il primo creato riprende il vecchio listino unico
+function getListini(){
+  let L=LS.g('slv_listini_v1',null);
+  if(!L||!L.length){L=[{id:'base',nome:'Listino base',def:true,prezzi:{...PREZZI_DEFAULT,...LS.g('slv_prezzi_v1',{})}}];localStorage.setItem('slv_listini_v1',JSON.stringify(L))}
+  return L;
+}
+function setListini(L){localStorage.setItem('slv_listini_ts',String(Date.now()));LS.s('slv_listini_v1',L)}
+function listinoDefault(L){L=L||getListini();return L.find(x=>x.def)||L[0]}
+function listinoDi(nome,L){L=L||getListini();const a=getAnag()[nome]||{};return L.find(x=>x.id===a.listino)||listinoDefault(L)}
+// anagrafica: {nome:{prov,note_conf,pagamento,listino,prezzi:{...prezzi personalizzati}}}
+function getAnag(){return LS.g('slv_anag_v1',{})}
+function setAnag(a){localStorage.setItem('slv_anag_ts',String(Date.now()));LS.s('slv_anag_v1',a)}
+function prezzoCliente(nome,f){
+  const a=getAnag()[nome]||{};
+  if(a.prezzi&&a.prezzi[f]!==undefined&&a.prezzi[f]!=='')return +a.prezzi[f]||0;
+  return +(listinoDi(nome).prezzi||{})[f]||0;
+}
+function getPrezzi(){return{...PREZZI_DEFAULT,...listinoDefault().prezzi}}
+function setPrezzi(p){const L=getListini();listinoDefault(L).prezzi={...p};setListini(L)}
+function totImporto(c){
+  return Object.entries(c.formati||{}).reduce((s,[f,q])=>s+prezzoCliente(c.nome,f)*q,0);
+}
+const GIORNI=['Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
+const BASE={"Lunedi": [{"nome": "ALFI S.R.L.", "prov": "AL", "note_conf": "scat", "formati_base": {}}, {"intestazione": true, "nome": "BERGAMO"}, {"nome": "MACEL. ELIO DEI F.LLI ALGERI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PARROCCHIA SAN LORENZO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "OMAR SRL - u2 alzano", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900058 PRIVATO  CASA DA ROMANO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SOC. AGR. IL FIENILE SRL - ca fenile", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "OL BOTIGHI' DI CASAI EWA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900012 PRIVATO bottega della frutta", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PERACCHI GIOVANNI", "prov": "AL", "note_conf": "scat", "formati_base": {"BOX4": 45, "BOX6": 30}}, {"nome": "PAGLIAROLI FRATELLI - isla bonita", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 50}}, {"nome": "ORTOFRUTTA ROSSANA DI PIEVANI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ARETE' COOPERATIVA SOCIALE", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 7}}, {"nome": "NIAGARA & CO GORLE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA RAVELLINI SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PIZZERIA DA LUCA SRLS", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COCO' SAS DI PASTA GIUSEPPE", "prov": "BG", "note_conf": "ceste pla", "formati_base": {}}, {"nome": "TREX BERGAMO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SHOPSì - naturasì borgo palazzo BG1", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA BRIVIO di Brivio Milena", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 15}}, {"nome": "FRANCESCO BENAGLIA - manuela ambulante", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "AVIRVAREI CORINA - la Coquette", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "L'ORTO DI BORFURO SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TURILLO SRLS - curlo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SHOPSì - naturasì carducci BG2", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "CECE E SIMO - ce.lo.", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "CLAUDINE GIAMPICCOLI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BAR SAN PAOLO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "NOVELLO SILVIA", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 15}}, {"nome": "LORETO CARNI SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "CARRARA GIANCARMELO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PANETTERIA BANA", "prov": "BG", "note_conf": "", "formati_base": {"BOX4": 20, "BOX6": 20, "BOX10": 5}}, {"nome": "BOFFETTI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COR.MARKET", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "GOLOSIDEA LAB", "prov": "BG", "note_conf": "", "formati_base": {"BOX10": 3}}, {"nome": "TRE VALLI SRL", "prov": "BG", "note_conf": "cpr", "formati_base": {}}, {"nome": "ARRIGONI - a ponteranica", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "IDEE BISTROT SRL - PLA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900055 FRUTTORTO DI FORCELLA ELENA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SILVIA NORBIS - Famiglia Foresti", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 9}}, {"nome": "LUIGIA BARBERI - scuola luigia", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA SANTINI SRL", "prov": "BG", "note_conf": "", "formati_base": {"BOX4": 13, "BOX6": 30}}, {"nome": "DA BRISSI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "LECCO-COMO-MB"}, {"nome": "CORTE DEL NOCE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ANTICA HOSTERIA ODIAGO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "FRAS.CO - conad merate", "prov": "MI", "note_conf": "scat + biglietto", "formati_base": {}}, {"nome": "FABRETTO IVANO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "DLV- macelleria il taglio", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "BOTTEGA DEL MAIALE SAS", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "DAMIANO PIATTELLA- privato SCAT", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA SALUMERIA VERGANI", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "LA DOLCE ENOTECA SNC", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "DELIZIE DI BACCO ENOTECA DI DANIELA", "prov": "AL", "note_conf": "scat", "formati_base": {}}, {"nome": "PANIFICIO PASTICCERIA MAFFIA - como centro", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA NICO PONCIA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "VOLONTE FABRIZIO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO PASTICCERIA MAFFIA - colverde", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO PASTICCERIA MAFFIA - uggiate", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "PRIVATO UGGIATE MANUEL 334/9583657", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO PASTICCERIA MAFFIA - olgiate", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO PASTICCERIA MAFFIA - lurate", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "ALBERIO srl", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "LA BOTTEGA DEL GUSTO Mozzate Co", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "BELLUSCHI SONIA NATALIA- 346/9420112", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "NO-STRANO SRL MACELLERIA GANDINI", "prov": "AL", "note_conf": "scat", "formati_base": {}}, {"nome": "MONIERI LUIGI MARIA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "CASA DEL TORTELLINO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "MORELLI RISTORAZ - pomireu fabio moriconi", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "FINE SRL - rist. emilia seregno nicolò caparra", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "BRIANZA BAKERY DI MAURI DANIELA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "LA BOTTEGA DEL PANE", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "900006PRIVATO PASSIONE FRUTTA - vitale roberto", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "TUTTO BUONO - paola", "prov": "AL", "note_conf": "scat", "formati_base": {}}, {"nome": "PRIVATA CAMI cit. Mapelli/Bonati", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "VITO DI VITA 333/8678670", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 1, "BOX10": 1}}, {"intestazione": true, "nome": "FUORI PROGRAMMA"}], "Martedi": [{"intestazione": true, "nome": "BASSA BERGAMASCA"}, {"nome": "IL FRUTTETO DI MATTIA BENTI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COCO' SAS DI PASTA GIUSEPPE", "prov": "BG", "note_conf": "ceste pla", "formati_base": {}}, {"nome": "LIBRERIA TERZO MONDO", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 6}}, {"nome": "MACELLERIA MARCHESI SNC", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "AMANDLA COOPERATIVA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "IL SOLE E TERRA SOC. COOPERATIVA", "prov": "BG", "note_conf": "scat usati", "formati_base": {}}, {"nome": "MONDOFLEX", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "GINGER SNC - ocabianca", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA GASTRONOMIA CARMINATI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TENNIS DI LEONARDO MORA  E C. SAS - dimora", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO ROTA E CONSONNI (NADIA)", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900052 FRUTT'OSIO -  mondofrutta", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BOLLE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO DOPPIOZERO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BOLLE AND CO. SRL - ristorante bolle", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "VALIETTI ELENA MARIA", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 6}}, {"nome": "PASTICCERIA MORLACCHI  SRL", "prov": "BG", "note_conf": "pl plastica", "formati_base": {}}, {"nome": "IL GIOPPINO SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900002 PRIVATO orto di gery", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SCARDINO CRISTOFERO - primizie e delizie", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MINETTI 1980 SRL", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "90049 PRIVATO minetti -RAFFAELLA MASPER", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "90049 PRIVATO minetti - ALESSANDRO ROTA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900003 PRIVATO green fruit", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "METODO - locanda marena", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA ROSBUCO DI E. & D. SNC", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA UNDICI di Piantoni Luca", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ALIMENTARI ARCENE - la casa gialla", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ANNALISA BUGNIla baita di tranquillo Pontirolo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "VENDERBE SRL - naturasì treviglio", "prov": "BG", "note_conf": "", "formati_base": {"BOX4": 60}}, {"nome": "CUORDIFRUTTA DI FACCHINETTI SARA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900054 PRIVATO SAN MARTINO - paolo colleoni", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "L'ORTO DI JACK- EX MAZZADI", "prov": "BG", "note_conf": "CPR", "formati_base": {"BOX6": 40}}, {"nome": "VIOLA SRL - LOCANDA VIOLA PAGAZZANO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "WORLDTASTE1956SRL - giavazzi", "prov": "AL", "note_conf": "spedizioni", "formati_base": {}}, {"nome": "WORLDTASTE1956SRL - giavazzi", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "KUCCAGNA SRL", "prov": "AL", "note_conf": "scat", "formati_base": {}}, {"nome": "KUCCAGNA X UNA VITA DA BIO", "prov": "AL", "note_conf": "scat", "formati_base": {}}, {"nome": "900004 PRIVATO gas confai", "prov": "BG", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "BERGAMO-BRESCIA"}, {"nome": "GHERIM SOCIETA' COOPERATIVA SOCIALE", "prov": "BG", "note_conf": "", "formati_base": {"BOX4": 15, "BOX6": 23}}, {"nome": "DA VITTORIO SRL - dav bg", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 4}}, {"nome": "FLORIAN MAISON", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PAGANI GASTRONOMIA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "IL COLMETTO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LA NUOVA RIPAMONTI", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LA BOTTEGA DI ANDREA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "GIU.LIO' RESTAURANT SRL il vecchio larry", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "BOTTEGA DEL GUSTO", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "L'ALBERETA  SRL", "prov": "BS", "note_conf": "scat media", "formati_base": {}}, {"nome": "CANTINE BIONDELLI", "prov": "BS", "note_conf": "", "formati_base": {"PLAT30": 3}}, {"nome": "CENTRO SPESA CUCCHI S.N.C. Di Cucchi", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "GAUDIO - simposio", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LA PESCHIERA DA PIERO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "G. FOGAZZI NEGOZIO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "CANTOALTO SRL - a21 ristopizza", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "BONINI FRUTTA S.M.C.", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "BONTA' IN TAVOLA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "DA NACIO - tator", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "FUNGO BIO CASTEL MELLA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LANZANI ALESSANDRO 6C SNC", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "FORME - atena", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "DA FEDERICO DI VRECH FEDERICO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "SIRANI SRL", "prov": "BS", "note_conf": "scat", "formati_base": {"PLAT30": 5}}, {"nome": "LA DISPENSA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "RISTORANTE LA SOSTA SRL", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "RISTORANTE LA SOSTA BS", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "ATTITUDINE - rivale in città", "prov": "BS", "note_conf": "box", "formati_base": {}}, {"nome": "LA MELA SNC", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LA BRACE DI COLOSIO SIMONE E C.", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "BLACK SHEEP PUB BRESCIA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA MILANO del f.lli Abrami", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "ZANCO GASTONE", "prov": "AL", "note_conf": "scat", "formati_base": {}}, {"nome": "HERMOSA CAFE'", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "BIGOL D'AI", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "CESTO DELLE BONTA' di Zampolini Laura", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "BAR IL PORTICONE SNC", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "IL FUNGO BIO - BRESCIA TRIUMPLINA", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "IL FORNAIO CANTU - la veneziana", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "FRUTTA NUDA SRL -SCAT", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LA CONTADINA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "TRATTORIA ALPINO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "AGRITURISMO IL ROCCOLO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "TATOR DI ZANETTI CARLO - da nacio", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "GASTR ALEXANDRA - se NO ddt usa cod. 900043", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "LINEA VERDE DI MONTELEONE ANTONIO - SCAT", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "CARLO MAGNO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "ANTICA TRATTORIA  PIE DEL DOS EREDI", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "NEGRINI", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "DINA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "BONA ORTOFRUTTA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LA BOTTEGA DEL CONTADINO - se no ft 900056", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "ANTICA FORNERIA FORESTI", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "VIVILO GROUP SRL", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "AGRITURISMO SAN LORENZO CAPRIOLO", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "PATANEGRA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "GIACOMINI TOMMASO - della contrada", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "EDEN S.R.L.- la pagoda", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PODERE DELLA CAVAGA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "F.LLI REBUFFINI SRL", "prov": "BG", "note_conf": "scat + bigliettino", "formati_base": {}}, {"nome": "F.LLI REBUFFINI SRL - Cracco Portofino", "prov": "BG", "note_conf": "scat- scrivi cracco porotfino", "formati_base": {}}, {"nome": "F.LLI REBUFFINI SRL -  cristina ortofrutta", "prov": "BG", "note_conf": "scat - scrivere C. BORMIO", "formati_base": {}}, {"nome": "DELLE PIANE PAOLA - fruttivendolo milanese - SCAT", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "EMPORIO VINI E SAPORI", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "LAGOSCURO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "UNA VITA DA BIO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "LA CREPA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "ZILLI FERRUCCIO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "HOSTARIA VIOLA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "HOSTARIA VIOLA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "BUONPALATO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "ITALTRADE KM ITALIA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "RENZO ARIENTA - privato", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "ILDE", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "L'ALCHIMIA", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "BOTTEGA 125", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "HOTEL MARIET", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "RISTORANRTE CONSORZIO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "IL VECCHIO PIERO", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "CAZZAMALI SRL", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "LA CONTADINA", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"intestazione": true, "nome": "FUORI PROGRAMMA"}], "Mercoledi": [{"intestazione": true, "nome": "GDO"}, {"nome": "IPER", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "RIALTO - gigante", "prov": "AL", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "BERGAMO"}, {"nome": "ORTOFRUTTA  DI BRIGNOLI CAMILLA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "GHILARDI ANGELO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "CORTESI STEFANO - oasi della frutta", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "JONATHAN SIGNORELLI- GRAVITA' ALZANO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "IL MEGLIO DELLE CARNI DI BOTTER", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COLLEONI MACELLERIA DI COLLEONI SIRIA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "DON LUIS RISTORANRE - torre boldone", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA DA GIORGIO - ex mutti", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "FRANCESCO BENAGLIA - manuela ambulante", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PAGLIAROLI RICCARDO", "prov": "BG", "note_conf": "foglio scad/pl", "formati_base": {}}, {"nome": "ROBERTO RINALDI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "YUO REBORN ASD", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ARETE' COOPERATIVA SOCIALE", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 7}}, {"nome": "DIMORE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "AR CONCEPT LIFE SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MERX - gallo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "FUDBOX DI COLOGNI ANDREA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "LUIGIA BARBERI - scuola luigia", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ANDREA BENIGNI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA ARTINA STEFANO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PRIVATA MILENA LAVANDERIA", "prov": "BG", "note_conf": "", "formati_base": {"BOX10": 3}}, {"nome": "LA FRUTTA DEL BORGO", "prov": "BG", "note_conf": "", "formati_base": {"SAC4": 2, "SAC6": 2, "BOX4": 8, "BOX6": 8}}, {"nome": "DEGUSTO BIRRA E CUCINA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PUTTI DYLAN", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "I MONELLI SRL", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 10}}, {"nome": "BARETTO SAN VIGILIO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PANDIZUCCHERO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900055 FRUTTORTO DI FORCELLA ELENA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ARRIGONI - a ponteranica", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TRATTORIA FALCONI", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 1}}, {"nome": "OSTERIA DELLA BRUGHIERA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "VAL BREMBANA"}, {"nome": "900022 PRIVATO belotti luca caffe' saint laur", "prov": "BG", "note_conf": "", "formati_base": {"BOX10": 4}}, {"nome": "AGRIBREMBO", "prov": "BG", "note_conf": "scat + box vuoti da 6 senza tmc", "formati_base": {}}, {"nome": "DA PAGANI' ANTICHI SAPORI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA GIUPPONI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "GET OUT SRL - osteria brembo camerata", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "QUARTERONI FERDINANDO - Ferdy", "prov": "BG", "note_conf": "pl pla", "formati_base": {}}, {"nome": "RISTORANTE LE MINIERE di Bonini Lorenzo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900007 PRIVATO macelleria berera", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ALIMENTARI BOFFELLI GIANNI PIAZZA BREMBANA", "prov": "BG", "note_conf": "FLYER", "formati_base": {}}, {"nome": "LA BOTTEGA DI ARIOLI ARONNE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "LOCANDA DEI CANTU", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ROSSI CHERUBINO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "EDELWEISS 2.0 - cr28", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SOC. AGRICOLA IL FIENILE SRL - ca fenile", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900057 PRIVATO RISTORANTE SOLE MEZZOLDO - claudia molinari", "prov": "BG", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "MILANO"}, {"nome": "ESCAM CARNI SCAT", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "BARBERINI - save work SCAT", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "LA TRADIZIONE DI VIA CAVOUR", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "FRAS.CO - conad vimodrone - SCAT - 2 DDT", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "PRINCIPE DI SAVOIA", "prov": "MI", "note_conf": "scat", "formati_base": {"PLAT30": 36}}, {"nome": "A.F.I. SNC DI AQUILANO mac garibaldi", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "ROMAGNOSI SRL - identita' golose", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "HEALTHY FOOD - all'ortolano cimarosa - 900020", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "HEALTY FOOD - all'ortolano canonica - 900020", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "FIORAVANTI - viu milan", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "ERMANNO (eral55)  10.30-19", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA RAIMONDI", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "TERROIR MILANO SRL", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "RADICI BERNADETTE - ortofrutta e cosebuone", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "CA DEL BECH SRLS", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "PRIVATO PAOLO GARIBOLDI - enigm srl", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "POTAFIORI  SRL - SCAT", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "FOOD ME UP - raw restaurant", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "SAN MARTINO - nettare dei santi", "prov": "MI", "note_conf": "pl pla", "formati_base": {}}, {"nome": "L'ALCHIMIA", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA FARAVELLI  SAS", "prov": "MI", "note_conf": "2 scat", "formati_base": {}}, {"nome": "MACELLERIA MASSERONI SAS", "prov": "MI", "note_conf": "", "formati_base": {"BOX4": 30}}, {"nome": "AZIENDA AGRICOLA PARCO DEI BUOI", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "ANDREA RICCADONNA - privato mi", "prov": "MI", "note_conf": "scat + uova big", "formati_base": {"BOX10": 9}}, {"nome": "MAGNA PARS SRL", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "MGM SOSIA MILANO SUD -  SCAT", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "ENOTECA NATURALE  - pet nat", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "LE POLVERI VIA AUSONIO", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "LE POLVERI SRL - via ausonio", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "VERONICA PAGANI", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "DEGUSTO - ristorante altrimenti edo", "prov": "MI", "note_conf": "pl pla", "formati_base": {}}, {"nome": "GHERARDI FLAVIO - sarah ambulante 900029", "prov": "BG", "note_conf": "box 6 tanti poi 4 e 10 - mettere 1 foglietto/pl", "formati_base": {}}, {"nome": "TERROIR MILANO SRL", "prov": "MI", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "FUORI PROGRAMMA"}], "Giovedi": [{"intestazione": true, "nome": "BERGAMO"}, {"nome": "IL FRUTTETO  DI MATTIA BENTI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900012 PRIVATO la bottega della frutta", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PAGLIAROLI FRATELLI - isla bonita", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 60}}, {"nome": "BERG INVEST SRL - eurospin a villa", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA RINALDI - nicola e rina", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 15}}, {"nome": "PURO CIBO E VINO - puro cibo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA ROSSANA DI PIEVANI", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 30}}, {"nome": "OL FROTAROL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COCO' SAS DI PASTA GIUSEPPE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA BRIVIO di Brivio Milena", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 20}}, {"nome": "GI.VA. HOTELS SNC - giopi' e margi'", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "STUDIO BETTONI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "AVIRVAREI CORINA - la Coquette", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "L'ORTO DI BORFURO SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TURILLO SRLS - curlo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO ROTA BIASETTI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "EDEN LA PAGODA - masone la bottega", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ALBACHIARA SRL - chef claudio", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TRATTORIA LA FRICCA SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "P.O.G. SRL - OSTERIA AL GIGANCA", "prov": "BG", "note_conf": "calibro L/XL", "formati_base": {}}, {"nome": "GLOBUS MARKET DI VAGO GIANLUCA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SALUMERIA MAZZOLENI CARLO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "CARROPONTE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COR.MARKET", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "DONIZZETTI SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BAR FLORA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "GASTRONOMIA MANGILI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COOP. CITTA' ALTA CIRCOLINO - charly", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "DODO2000 - dai gustosi", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 2}}, {"nome": "GELATERIA CHERUBINO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TRATT. DEL TEATRO - SCAT", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BAR PIZZERIA SAN VIGILIO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "3BMETEO BERGAMO", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 2}}, {"nome": "ARRIGONI - ponteranica", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "OSTERIA DELLA BRUGHIERA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "FROSIO RISTORANTE", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 2}}, {"nome": "CLU RISTORANTE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TRE VALLI SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MICHELA MAB GALBUSERA 339/4041582", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "3B METEO PONTE SAN PIETRO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "GICER - ristorante cereda", "prov": "BG", "note_conf": "pl pla", "formati_base": {"PLAT30": 2}}, {"nome": "HOTEL 700", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "RAVANELLI CHRISTIAN - ort. Ravanelli", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "MIRKO ORTOFRUTTA", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "TRATTORIA VISCONTI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "VILLA MARTINELLI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "1960 SANZANI ANGELO SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "IL SOLE E TERRA SOC. COOPERATIVA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "LIFE SOURCE SRL", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900050 PRIVATO luca's pub", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "G.D.M. - cher wine bar", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BARLEY DI ANDREINI SONIA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "BRESCIA"}, {"nome": "OMAR SRL - u2 negrone", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "Z2C FORNERIA - marios bakery", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PELLEGRINO ANTONIO MIRKO", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 35}}, {"nome": "DA VITTORIO SRL -  dav mi", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "ORTOFRUTTICOLA ARCOBALENO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "IN CROISSANTERIA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "HOSTERIA DEL VAPORE DI BERZI STEFANO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA MAGRI BRUNO", "prov": "BG", "note_conf": "", "formati_base": {"SAC6": 15, "ALV7": 8}}, {"nome": "OSTERIA DELLA VILLETTA", "prov": "BS", "note_conf": "", "formati_base": {"PLAT30": 2}}, {"nome": "IL PARADOSSO - emmegi", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "BRICIOLE DI BONTA'", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "PASTICCERIA ELITE'", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "SAPORI DI FACCHI - artigiani in cucina", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "PRIVATO EX PRIORE", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "CAMANINI -LIDO 84", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "VILLA PARADISO SRL", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "VILLA FELTRINELLI", "prov": "BS", "note_conf": "scat", "formati_base": {"PLAT30": 12}}, {"nome": "GIRARDI 1805", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "LA COLLINA SALO' - SCAT", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "PANNI DANIELE - dal complice", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "ANTICA TRATTORIA MIRAVALLE DI Bodei&C.", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "BELLINI ANGIOLETTA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "L'OSTERIA RISTORANTE H2O", "prov": "BS", "note_conf": "pl pla", "formati_base": {}}, {"nome": "GLOBAL GEST - acquariva scrivi a Mirco Bosio", "prov": "BS", "note_conf": "box", "formati_base": {"BOX10": 3}}, {"nome": "GLOBAL GEST - splendido bay", "prov": "BS", "note_conf": "box + scat", "formati_base": {}}, {"nome": "GLOBAL GEST - il rivale", "prov": "BS", "note_conf": "bosx + scat", "formati_base": {}}, {"nome": "HOTEL VILLA ROSA", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "RISTORANTE ESPLANADE", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA DA BRUNO E TURIA", "prov": "BS", "note_conf": "scat", "formati_base": {"PLAT30": 1, "BOX4": 10, "BOX6": 10}}, {"nome": "IL MACELLAIO STE", "prov": "BS", "note_conf": "", "formati_base": {"BOX4": 15, "BOX6": 6}}, {"nome": "FRUTTA NUDA SRL", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "GLOBAL GEST- honore", "prov": "BS", "note_conf": "bosx + scat", "formati_base": {}}, {"nome": "VICTOR FRUTTA", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "SALAMENSA", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "LA CONTADINA", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "IL FUNGO BIO - rezzato", "prov": "BS", "note_conf": "scat", "formati_base": {}}, {"nome": "OIP SRL -winearchy enoteca rezzato", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "I PERFORMANCE - manna marcella", "prov": "BS", "note_conf": "", "formati_base": {}}, {"nome": "MIRAMONTI L'ALTRO", "prov": "BS", "note_conf": "pl pla", "formati_base": {}}, {"intestazione": true, "nome": "FUORI PROGRAMMA"}], "Venerdi": [{"intestazione": true, "nome": "GDO"}, {"nome": "IPER", "prov": "AL", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "VAL SERIANA"}, {"nome": "L'ORTO FIORITO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ALESSANDRO BERETTA - macelleria beretta", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "PANIFICIO ZANETTI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ENOTECA WIMPY", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BAR TABACCHI  SORRISO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "LA BOTTEGA DELLE CARNI DI GIO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BANANA JOE FRUIT", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "LA ROSTICCERIA DI BELOTTI MIRCO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SEMMI SRL - u2 cene", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "FENICE SNC - bottega villa", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA BONICELLI", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "900026 PRIVATO macelleria zachi", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TRATTORIA CENTRALE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "CONTRADA BRICCONI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "GIUDICI MARIO - salumeria la rocca", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COMMERCIO & MAS CI'", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 1}}, {"nome": "MACELLERIA GIUDICI BATTISTA ALESSANDRO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "AGRITURISMO LARICE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "COLLINA LUXURY", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BLUM IN RISTORANTE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "VISINONI MACELLERIA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "F.LLI FERRARI SNC - garden hotel", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "HOTEL LIBIA", "prov": "BG", "note_conf": "", "formati_base": {"BOX10": 3}}, {"nome": "SERPELLINI GIOVANNI - macelleria", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900017 PRIVATO stavros", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "G.F. ITA - superalimentari ferrari", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "THOMAS MARKET", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MASA CHALET", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BELLINGHIERI SNC DI VANNI & CESIRA", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 3}}, {"nome": "AZ. AGRICOLA SEBINO - butighì", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "PRIVATA CINZIA SAN LORENZO - 392/2450767", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "NO MORE SAS - bar le more", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "HOTEL RISTORANTE  MIRANDA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "RISTORANTE ZU", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TRISA RISTORANTE", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 6}}, {"nome": "MACELLERIA 2000 DA CHRISTIAN PIACENZA", "prov": "AL", "note_conf": "box 4/6", "formati_base": {}}, {"nome": "LA FONTE - rist la fonte monasterolo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "LOCANDA DEL BOSCAIOLO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ORTOBERGAMO CASAZZA JESSICA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "F.LLI REBUFFINI SRL", "prov": "BG", "note_conf": "scat", "formati_base": {}}, {"nome": "ZAMBAITI BEATRICE - ortaglina", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "P.F.A. - loro ristorante", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "DA VITTORIO SRL - dav bg", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 5}}, {"intestazione": true, "nome": "BERGAMO"}, {"nome": "XENIA SPA - Piajo Aroma", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "XENIA SPA - Piajo Location", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900018 PRIVATO orto di dani", "prov": "BG", "note_conf": "", "formati_base": {"BOX4": 10, "BOX6": 10}}, {"nome": "ARETE' COOPERATIVA SOCIALE", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 7}}, {"nome": "COCO' SAS DI PASTA GIUSEPPE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "FRANCESCO BENAGLIA - MANUELA AMBULANTE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA SANTINI SRL", "prov": "BG", "note_conf": "", "formati_base": {"BOX4": 13, "BOX6": 30}}, {"nome": "I MONELLI SRL", "prov": "BG", "note_conf": "scat", "formati_base": {"BOX6": 20}}, {"nome": "ANDREA BENIGNI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "MILANO"}, {"nome": "EMANUELE V. CART", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "GALLIA HOTEL", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "CINISELLO BALSAMO - privata", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "BOTTEGAIO NOSTRANO", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "I NERVITT - 85 bistrot", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "FRANCESCO FROVA - socio selvagge", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "MADAI - sesto san giovanni", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "EXPERIENCE - osteria dei poeti", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "MOAM SRL - bulk", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "FIORAVANTI - viu milan", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "LA LEGA - nuova arena", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "CENTRO BOTANICO", "prov": "MI", "note_conf": "", "formati_base": {"BOX6": 18}}, {"nome": "PIDE SRL - osteria da filippo", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "TERROIR MILANO SRL", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "ALESSANDRO ANGELONE", "prov": "MI", "note_conf": "scat", "formati_base": {"BOX10": 6}}, {"nome": "PRIVATA MI FRANCESCA SETTESOLDI", "prov": "MI", "note_conf": "scat", "formati_base": {"BOX10": 6}}, {"nome": "900051 RISTORANTE IL PASCOLI - ennefin srl", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "DEVE SRL- ristortante dell'angolo", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "BENEVENUTI SNC DI BENVENUTI DANIELE", "prov": "MI", "note_conf": "scat", "formati_base": {}}, {"nome": "DAMA SRL", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "MORELLI - moam", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "L'ORTO DI JACK POLIZIANO", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "NATURASI' VIA V. MONTI", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "LOCALE - rondine srl", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "FRUTTETO F.LLI GALANTINO", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "TRIPLETE SRL - botinero", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "IL GUSTO DELLA FRUTTA", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "TREDESIN", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "CASCINA ITALIA + p. manifest", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "THEA MILANO PRIVATA376/1781595", "prov": "MI", "note_conf": "", "formati_base": {}}, {"nome": "GHERARDI FLAVIO - sarah ambulante - 900029", "prov": "BG", "note_conf": "box 6 tanti poi 4 e 10 - mettere 1 foglietto/pl BIG", "formati_base": {}}, {"intestazione": true, "nome": "FUORI PROGRAMMA"}], "Sabato": [{"intestazione": true, "nome": "BASSA BERGAMASCA"}, {"nome": "PICCININI PIETRO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ARETE' COOPERATIVA SOCIALE", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 7}}, {"nome": "COCO' SAS DI PASTA GIUSEPPE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "VESUVIO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "AVIRVAREI CORINA - la coquette", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SWEET IRENE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TURILLO SRLS - curlo", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "CAFFE' PAPAVERO - coccio", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 2, "BOX6": 2}}, {"nome": "IL PERLA NERA - eden", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "NOVELLO SILVIA", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 15}}, {"nome": "900052 FRUTT'OSIO - mondofrutta", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "FEDERICO COLLEONI - il carroccio", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SCARDINO CRISTOFERO- primizie delizie", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ORTOFRUTTA ROSBUCO DI E. & D. SNC", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MG RISTORAZIONE - braseria", "prov": "BG", "note_conf": "", "formati_base": {"PLAT30": 3}}, {"nome": "MINETTI 1980 SRL  - SCAT", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900003 PRIVATO green fruit", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "DANIELE BONOMI", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "TIPIKO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BARCA A VELA RISTORANTE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "VENDERBE SRL - naturasì treviglio", "prov": "BG", "note_conf": "", "formati_base": {"BOX4": 50}}, {"nome": "CUORDIFRUTTA DI FACCHINETTI SARA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "L'ORTO DI JACK- EX MAZZADI", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 40}}, {"nome": "COATI STEFANO- rist il Picchio Rosso", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA 2000 DA CHRISTIAN", "prov": "AL", "note_conf": "box 4/6", "formati_base": {}}, {"nome": "RISTORANTE  MARIET", "prov": "AL", "note_conf": "", "formati_base": {}}, {"nome": "LE SORELLE", "prov": "BG", "note_conf": "", "formati_base": {"BOX6": 15}}, {"nome": "SALA LORENZA - rist il frate", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "RIVA DI STEFANIA CATTANEO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "ARRIGONI - grassobbio", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BARNABA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "BURRO RISTORANTE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "900053 PRIVATO a casa del contadino", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MACELLERIA SALUM. ALFREDO GRIGIS", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "G&G DI GRIS MARCELLO", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "MAGONI PANETTERIA", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "AZ. AGRICOLA LA PASSATA FOOD & WINE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "SORRISO RISTORANTE", "prov": "BG", "note_conf": "", "formati_base": {}}, {"nome": "RISTORANTE CA DI BORE- leone grigis", "prov": "BG", "note_conf": "", "formati_base": {}}, {"intestazione": true, "nome": "FUORI PROGRAMMA"}]};
+
+// ── STORAGE ───────────────────────────────────────────
+const LS={
+  g(k,d=null){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
+  s(k,v){try{localStorage.setItem(k,JSON.stringify(v));sched()}catch{}}
+};
+// ── DATE E SETTIMANE ─────────────────────────────────
+function isoLoc(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function parseIso(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function lunediDi(d){const l=new Date(d.getFullYear(),d.getMonth(),d.getDate());const dy=l.getDay();l.setDate(l.getDate()-(dy===0?6:dy-1));return isoLoc(l)}
+function addGiorni(iso,n){const d=parseIso(iso);d.setDate(d.getDate()+n);return isoLoc(d)}
+function fmtD(iso){return iso.split('-').reverse().join('/')}
+function fmtDM(iso){return fmtD(iso).slice(0,5)}
+function dataDi(sett,g){return addGiorni(sett,GIORNI.indexOf(g))}
+function giornoDi(iso){const d=parseIso(iso).getDay();return d===0?null:GIORNI[d-1]}
+const OGGI=isoLoc(new Date());
+// la domenica si lavora già sulla settimana successiva
+function getSett(){const d=new Date();if(d.getDay()===0)d.setDate(d.getDate()+1);return lunediDi(d)}
+const SETT_OGGI=getSett();
+let SETT=SETT_OGGI;
+function getG(g){return(LS.g('slv_ord_v1',{})[SETT]||{})[g]||null}
+// noTs=true quando la lista viene solo creata/migrata, senza modifiche dell'utente
+function setG(g,lista,noTs){const a=LS.g('slv_ord_v1',{});if(!a[SETT])a[SETT]={};a[SETT][g]=lista;if(!noTs)a[SETT]._ts=Date.now();LS.s('slv_ord_v1',a)}
+// ── GIRI PERMANENTI (anagrafica clienti per giorno) ───
+function stripTpl(c){return c.intestazione?{intestazione:true,nome:c.nome}:{nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||''}}
+function getTpl(){
+  let t=LS.g('slv_giri_v1',null);
+  if(!t){t={};GIORNI.forEach(g=>t[g]=(BASE[g]||[]).map(stripTpl));localStorage.setItem('slv_giri_v1',JSON.stringify(t))}
+  return t;
+}
+function setTpl(t){localStorage.setItem('slv_giri_ts',String(Date.now()));LS.s('slv_giri_v1',t)}
+// riscrive il giro permanente del giorno g dall'ordine della lista settimanale (esclusi i fuori programma)
+function syncTpl(g,lista){const t=getTpl();t[g]=lista.filter(c=>!c.fp).map(stripTpl);setTpl(t)}
+function clienteBase(c){
+  const a=getAnag()[c.nome]||{};
+  return{nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',note_ord:'',formati:{},lotto:'',stampato:false,fp:false,nascosto:false,pagamento:c.pagamento||a.pagamento||''};
+}
+function migraG(g,lista){
+  const baseList=getTpl()[g]||[];
+  // 1. aggiungi campo pagamento se mancante
+  lista.forEach(c=>{if(!c.intestazione&&c.pagamento===undefined)c.pagamento=''});
+  // 2. inserisci intestazioni se mancanti
+  const intestazioniBase=baseList.filter(c=>c.intestazione).map(c=>c.nome);
+  if(!intestazioniBase.length)return lista;
+  if(lista.some(c=>c.intestazione))return lista;
+  const savedMap={};
+  lista.forEach(c=>{if(c.nome)savedMap[c.nome]=c});
+  const merged=baseList.map(c=>{
+    if(c.intestazione)return{intestazione:true,nome:c.nome};
+    return savedMap[c.nome]||clienteBase(c);
+  });
+  setG(g,merged,true);return merged;
+}
+function initG(g){
+  const ex=getG(g);
+  if(ex)return migraG(g,ex);
+  if(SETT<SETT_OGGI)return []; // settimana passata senza dati salvati: non crearla
+  const lista=(getTpl()[g]||[]).map(c=>{
+    if(c.intestazione)return{intestazione:true,nome:c.nome};
+    return clienteBase(c);
+  });
+  setG(g,lista,true);return lista;
+}
+function getLotti(){return LS.g('slv_lotti_v1',[])}
+function setLotti(l){localStorage.setItem('slv_lotti_ts',String(Date.now()));LS.s('slv_lotti_v1',l)}
+
+// totale uova → plateau equivalenti (ceil)
+function totUova(c){return Object.entries(c.formati||{}).reduce((s,[f,q])=>s+(UPF[f]||0)*q,0)}
+function totPlat(c){return Math.ceil(totUova(c)/30)}
+
+// ── SYNC ──────────────────────────────────────────────
+let st=null,syncing=false;
+function sched(){clearTimeout(st);st=setTimeout(sync,3000)}
+// per ogni settimana tiene la versione modificata più di recente (locale o server)
+function mergeOrd(srv,loc){
+  const out={...loc};
+  Object.keys(srv||{}).forEach(w=>{if(!out[w]||((srv[w]||{})._ts||0)>((out[w]||{})._ts||0))out[w]=srv[w]});
+  return out;
+}
+const TS_KEYS=[['giri','slv_giri_v1','slv_giri_ts'],['prom','slv_prom_v1','slv_prom_ts'],['anag','slv_anag_v1','slv_anag_ts'],['listini','slv_listini_v1','slv_listini_ts'],['lotti','slv_lotti_v1','slv_lotti_ts'],['tempi','slv_tempi_v1','slv_tempi_ts']];
+function statoLocale(){return ['slv_ord_v1','slv_giri_v1','slv_prom_v1','slv_anag_v1','slv_listini_v1','slv_lotti_v1','slv_tempi_v1'].map(k=>localStorage.getItem(k)||'').join('|')}
+async function pullMerge(){
+  const r=await fetch(WORKER+'/'+SYNC_KEY,{headers:{'X-Auth-Token':SYNC_TOKEN},cache:'no-store'});
+  if(r.status===401)throw new Error('token');
+  if(!r.ok)return;
+  const d=await r.json();if(!d)return;
+  if(d.ord)localStorage.setItem('slv_ord_v1',JSON.stringify(mergeOrd(d.ord,LS.g('slv_ord_v1',{}))));
+  TS_KEYS.forEach(([k,key,tsk])=>{
+    if(d[k]&&(d[k+'_ts']||0)>+(localStorage.getItem(tsk)||0)){localStorage.setItem(key,JSON.stringify(d[k]));localStorage.setItem(tsk,String(d[k+'_ts']))}
+  });
+  if(d.lotti&&d.lotti.length&&!getLotti().length)localStorage.setItem('slv_lotti_v1',JSON.stringify(d.lotti));
+}
+function aggiornaVista(){
+  const a=document.activeElement;
+  if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return; // non disturbare chi sta scrivendo
+  if(document.querySelector('.moverlay.open'))return;
+  if(PAGE==='ordini'){buildDtabs();render()}else if(PAGE==='weekly')renderWeekly();else if(PAGE==='dash')renderDash();else if(PAGE==='lotti')renderLotti();else if(PAGE==='clienti')renderClienti();
+}
+async function sync(){
+  if(syncing)return;syncing=true;dot('saving');
+  try{
+    const prima=statoLocale();
+    await pullMerge();
+    const body={ord:LS.g('slv_ord_v1',{}),lotti:getLotti()};
+    TS_KEYS.forEach(([k,key,tsk])=>{body[k]=LS.g(key,null);body[k+'_ts']=+(localStorage.getItem(tsk)||0)});
+    const r=await fetch(WORKER+'/'+SYNC_KEY,{method:'PUT',headers:{'Content-Type':'application/json','X-Auth-Token':SYNC_TOKEN},body:JSON.stringify(body)});
+    dot(r.ok?'ok':'err');
+    if(statoLocale()!==prima)aggiornaVista();
+  }catch{dot('err')}
+  syncing=false;
+}
+async function pull(){
+  dot('saving');
+  try{await pullMerge();dot('ok')}catch{dot('err')}
+}
+function dot(s){
+  document.getElementById('sync-dot').className=s==='ok'?'ok':s==='saving'?'saving':'';
+  document.getElementById('sync-label').textContent=s==='ok'?'Salvato':s==='saving'?'Salvo...':'Offline';
+}
+
+// ── NAV ───────────────────────────────────────────────
+let PAGE='ordini',GG=(SETT_OGGI===lunediDi(new Date())&&giornoDi(OGGI))||'Lunedi';
+function goPage(p){
+  PAGE=p;
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));
+  document.querySelectorAll('.ntab').forEach(x=>x.classList.toggle('active',x.dataset.p===p));
+  if(p==='lotti')renderLotti();if(p==='dash')renderDash();if(p==='weekly')renderWeekly();if(p==='clienti')renderClienti();if(p==='ordini'){buildWeekNav();buildDtabs();render()}
+}
+
+// ── GIORNI ────────────────────────────────────────────
+function buildDtabs(){
+  document.getElementById('day-tabs').innerHTML=GIORNI.map(g=>{
+    const lista=getG(g)||[];const n=lista.filter(c=>!c.intestazione&&totUova(c)>0).length;
+    const d=dataDi(SETT,g);const np=promDi(SETT,g).filter(p=>!p.fatto).length;
+    return`<button class="dtab${g===GG?' active':''}${d===OGGI?' oggi':''}" onclick="setGG('${g}')">${g} <span class="dd">${fmtDM(d)}</span>${n?`<span class="cnt">(${n})</span>`:''}${np?`<span class="dbell" title="${np} promemoria">🔔${np}</span>`:''}</button>`;
+  }).join('');
+}
+function buildWeekNav(){
+  const fine=addGiorni(SETT,5);
+  const stato=SETT===SETT_OGGI?'<span class="wk-st cur">settimana in corso</span>':SETT<SETT_OGGI?'<span class="wk-st past">settimana passata</span>':'<span class="wk-st fut">settimana futura</span>';
+  document.getElementById('week-nav').innerHTML=`
+    <button class="btn btn-ghost btn-sm" onclick="cambiaSett(-1)" title="Settimana precedente">◀</button>
+    <div class="wk-lbl">Settimana ${numSett(SETT)} <span class="wk-mese">· ${meseAnno(SETT,fine)}</span></div>
+    <button class="btn btn-ghost btn-sm" onclick="cambiaSett(1)" title="Settimana successiva">▶</button>
+    ${stato}
+    ${SETT!==SETT_OGGI?'<button class="btn btn-ghost btn-sm" onclick="vaiSett(SETT_OGGI)">Torna alla settimana in corso</button>':''}`;
+}
+// numero di settimana ISO 8601 (la settimana 1 contiene il primo giovedì dell'anno)
+function numSett(iso){const d=parseIso(iso);d.setDate(d.getDate()+3-((d.getDay()+6)%7));const g1=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-g1)/864e5-3+((g1.getDay()+6)%7))/7)}
+const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+function meseAnno(da,a){const x=parseIso(da),y=parseIso(a);
+  if(x.getMonth()===y.getMonth())return MESI[x.getMonth()]+' '+x.getFullYear();
+  if(x.getFullYear()===y.getFullYear())return MESI[x.getMonth()]+' – '+MESI[y.getMonth()]+' '+x.getFullYear();
+  return MESI[x.getMonth()]+' '+x.getFullYear()+' – '+MESI[y.getMonth()]+' '+y.getFullYear();}
+function cambiaSett(n){vaiSett(addGiorni(SETT,7*n))}
+function vaiSett(s,g){SETT=s;if(g)GG=g;SEL.clear();document.getElementById('src').value='';buildWeekNav();buildDtabs();render()}
+function setGG(g){GG=g;SEL.clear();buildDtabs();render()}
+
+// ── RENDER ────────────────────────────────────────────
+let mostraNascosti=false;
+function toggleNascosti(){
+  mostraNascosti=!mostraNascosti;
+  const btn=document.getElementById('btn-mostra-nasco');
+  btn.textContent=mostraNascosti?'👁 Nascondi nascosti':'👁 Mostra nascosti';
+  btn.style.background=mostraNascosti?'var(--tan)':'';
+  render();
+}
+function render(){
+  const lista=initG(GG);
+  const q=document.getElementById('src').value.trim().toLowerCase();
+  const filt=lista.filter(c=>{
+    if(c.intestazione)return !q; // le intestazioni si mostrano solo senza ricerca
+    if(c.nascosto&&!mostraNascosti)return false;
+    if(q&&!c.nome.toLowerCase().includes(q))return false;
+    return true;
+  });
+  const lotti=getLotti();
+
+  document.getElementById('rbar').style.display='flex';
+  rebuildRbar();
+
+  renderPromBox();renderLottiStrip();
+  const em=document.getElementById('empty');
+  em.textContent=(!lista.length&&SETT<SETT_OGGI)?'Nessun dato salvato per questo giorno in questa settimana.':'Nessun cliente trovato';
+  em.style.display=filt.length?'none':'block';
+  const tbody=document.getElementById('tbody');
+  if(!filt.length){tbody.innerHTML='';return}
+
+  const NCOL=15; // numero totale colonne
+  const promAperti=promDi(SETT,GG).filter(p=>!p.fatto);
+  const statoL=statoLotti();
+  tbody.innerHTML=filt.map(c=>{
+    if(c.intestazione)return`<tr class="intestazione-row"><td colspan="${NCOL}">${c.nome}</td></tr>`;
+    const idx=lista.indexOf(c);
+    const tu=totUova(c),tp=totPlat(c),ti=totImporto(c);
+    const cls=[tu>0&&!c.nascosto?'ha-ord':'',c.fp?'fp-row':'',c.stampato?'st-row':'',c.nascosto?'hid-row':''].filter(Boolean).join(' ');
+
+    const qcells=FORMATI.map(f=>{
+      const v=c.formati[f]||0;const hasV=v>0;
+      return`<td class="qty-cell"><input class="qin${hasV?' vv':''}" type="number" min="0" value="${v||''}" placeholder="" 
+        onchange="setQ(${idx},'${f}',this.value,this)" onfocus="this.select()"></td>`;
+    }).join('');
+
+    const badges=(c.fp?`<span class="badge badge-fp">FP</span>`:'')+
+                 (c.stampato?`<span class="badge badge-st">✓</span>`:'') +
+                 (c.nascosto?`<span class="badge badge-hid">nascosto</span>`:'')+
+                 (promAperti.filter(p=>p.cliente===c.nome).length?`<span class="badge badge-prom" title="${promAperti.filter(p=>p.cliente===c.nome).map(p=>p.testo.replace(/"/g,'&quot;')).join(' · ')}">🔔</span>`:'');
+    const ncHtml='';
+
+    const lsOpts=statoL.filter(l=>!l.chiuso||l.id===c.lotto).sort((a,b)=>(a.scadenza||'9999')<(b.scadenza||'9999')?-1:1);
+    const lottoSel=lsOpts.length
+      ?`<select class="lsel" onchange="setL(${idx},this.value)">\
+<option value="">—</option>${lsOpts.map(l=>`<option value="${l.id}"${c.lotto===l.id?' selected':''}>${esc(l.nome)}${l.scadenza?' · scad. '+fmtDM(l.scadenza):''}${l.chiuso?' (chiuso)':' · '+fmtU(Math.max(l.rem,0))+' uova'}</option>`).join('')}</select>`
+      :`<span style="font-size:10px;color:var(--bark)">nessun lotto</span>`;
+
+    const noteVal=c.note_ord||'';
+
+    return`<tr class="${cls}">
+      <td class="td-cl"><label class="selw" style="${tu>0&&!c.nascosto?'':'visibility:hidden'}" title="Seleziona per stampare"><input type="checkbox" class="selc" ${SEL.has(c.nome)?'checked':''} onchange="toggleSel(this.dataset.n,this.checked)" data-n="${esc(c.nome)}"></label>${c.nome}${badges}${ncHtml}</td>
+      <td class="td-n"><input class="nin${noteVal?' vv':''}" type="text" value="${noteVal.replace(/"/g,'&quot;')}" placeholder="—" onchange="setNote(${idx},this.value)">${zonaDiRiga(lista,idx)==='GDO'?`<div class="gdo-box${gdoCompleto(c)?'':' manca'}" onclick="openGdo(${idx})" title="N. ordine, colli e bancali">${gdoRiassunto(c)||'📦 inserisci dati GDO'}</div>`:''}</td>
+      ${qcells}
+      <td class="td-tot${tu===0?' zero':' pos'}">${tp>0?tp+' plt':'—'}</td>
+      <td class="td-imp${ti===0?' zero':''}">${ti>0?'€ '+ti.toFixed(2).replace('.',','):'—'}</td>
+      <td><select class="psel${c.pagamento?' '+c.pagamento:''}" onchange="setPag(${idx},this.value)">
+        ${PAG_OPT.map(o=>`<option value="${o}"${c.pagamento===o?' selected':''}>${o||'—'}</option>`).join('')}
+      </select></td>
+      <td>${lottoSel}</td>
+      <td class="td-az">
+        <button class="btn btn-moss btn-sm bic bprint" onclick="stampa(${idx})" title="Stampa solo questo ordine" style="${!c.nascosto&&tu>0?'':'visibility:hidden'}">🖨</button>
+        <button class="btn btn-ghost btn-sm bic" onclick="spostaSu(${idx})" title="Sposta su">▲</button><button class="btn btn-ghost btn-sm bic" onclick="spostaGiu(${idx})" title="Sposta giù">▼</button>
+        <button class="btn btn-ghost btn-sm bic" onclick="openSposta(${idx})" title="Sposta in un altro giorno">⇄</button>
+        <button class="btn btn-ghost btn-sm bic" onclick="openProm('${c.nome.replace(/\\/g,'').replace(/'/g,"\\'")}')" title="Aggiungi promemoria">🔔</button>
+        <button class="btn btn-ghost btn-sm bic" onclick="toggleNascosto(${idx})" title="${c.nascosto?'Mostra':'Nascondi'}">${c.nascosto?'👁':'🚫'}</button>
+        ${c.fp?`<button class="btn btn-ghost btn-sm bic bdel" onclick="eliminaCliente(${idx})" title="Togli fuori programma">🗑</button>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function setQ(idx,f,val,el){
+  const lista=initG(GG);const v=parseInt(val)||0;const c=lista[idx];
+  if(v<=0)delete c.formati[f];else c.formati[f]=v;
+  // assegna in automatico il lotto in uso alla prima quantità inserita
+  let nuovoLotto=null;
+  if(v>0&&!c.lotto){const u=lottoInUso();if(u){c.lotto=u.id;nuovoLotto=u.id}}
+  c.stampato=false;setG(GG,lista);buildDtabs();rebuildRbar();renderLottiStrip();
+  // aggiorna le celle della riga senza ridisegnare la tabella (così non si perde il punto di scrittura)
+  const tr=el&&el.closest('tr');
+  if(tr){
+    const tu=totUova(c),tp=totPlat(c),ti=totImporto(c);
+    el.classList.toggle('vv',v>0);
+    tr.classList.toggle('ha-ord',tu>0&&!c.nascosto);
+    const vis=tu>0&&!c.nascosto?'':'hidden';
+    const bp=tr.querySelector('.bprint');if(bp)bp.style.visibility=vis;
+    const sw=tr.querySelector('.selw');if(sw)sw.style.visibility=vis;
+    if(!tu&&SEL.has(c.nome)){SEL.delete(c.nome);sw.querySelector('input').checked=false;aggiornaPulsantiStampa()}
+    const bs=tr.querySelector('.badge-st');if(bs)bs.remove();tr.classList.remove('st-row');
+    const ct=tr.querySelector('td.td-tot');if(ct){ct.className='td-tot'+(tu===0?' zero':' pos');ct.textContent=tp>0?tp+' plt':'—'}
+    const gb=tr.querySelector('.gdo-box');if(gb){gb.classList.toggle('manca',!gdoCompleto(c));gb.innerHTML=gdoRiassunto(c)||'📦 inserisci dati GDO'}
+    const ci=tr.querySelector('td.td-imp');if(ci){ci.className='td-imp'+(ti===0?' zero':'');ci.textContent=ti>0?'€ '+ti.toFixed(2).replace('.',','):'—'}
+  }
+  const s=tr?tr.querySelector('select.lsel'):null;
+  if(!s){if(nuovoLotto)render();return}
+  const st=statoLotti();
+  [...s.options].forEach(o=>{const l=st.find(x=>x.id===o.value);if(l)o.textContent=l.nome+(l.scadenza?' · scad. '+fmtDM(l.scadenza):'')+(l.chiuso?' (chiuso)':' · '+fmtU(Math.max(l.rem,0))+' uova')});
+  s.value=c.lotto||'';
+}
+// ── DATI GDO (n. ordine, colli per confezione, bancali) ──
+function gdoRiassunto(c){
+  const g=c.gdo||{};const p=[];
+  if(g.ordine)p.push('Ord. '+esc(g.ordine));
+  const colli=Object.entries(g.colli||{}).filter(([f,n])=>n>0);
+  if(colli.length)p.push(colli.map(([f,n])=>f+' '+n+' colli').join(', '));
+  if(g.bancali)p.push(g.bancali+(g.bancali==1?' bancale':' bancali'));
+  return p.join(' · ');
+}
+// completo: n. ordine, bancali e colli per ogni formato ordinato
+function gdoCompleto(c){
+  const g=c.gdo||{};if(!totUova(c))return true;
+  return !!(g.ordine&&g.bancali&&Object.keys(c.formati||{}).every(f=>(g.colli||{})[f]>0));
+}
+let GD_IDX=null;
+function openGdo(idx){
+  GD_IDX=idx;const c=initG(GG)[idx];const g=c.gdo||{};
+  document.getElementById('gd-nome').textContent=c.nome;
+  document.getElementById('gd-ord').value=g.ordine||'';
+  document.getElementById('gd-banc').value=g.bancali||'';
+  const ord=FORMATI.filter(f=>(c.formati[f]||0)>0);
+  const lista=ord.length?ord.concat(FORMATI.filter(f=>!ord.includes(f)&&(g.colli||{})[f])):FORMATI;
+  document.getElementById('gd-colli').innerHTML=lista.map(f=>`<div class="gc"><label>${f}${c.formati[f]?` <span>· ordinate ${c.formati[f]}</span>`:''}</label>
+    <input type="number" min="0" step="1" id="gd-c-${f}" value="${(g.colli||{})[f]||''}" placeholder="colli"></div>`).join('')+
+    (ord.length?'':'<div style="grid-column:1/-1;font-size:11px;color:var(--bark)">Nessuna quantità inserita: puoi comunque indicare i colli.</div>');
+  document.getElementById('m-gdo').classList.add('open');
+  setTimeout(()=>document.getElementById('gd-ord').focus(),100);
+}
+function salvaGdo(){
+  const lista=initG(GG);const c=lista[GD_IDX];
+  const colli={};FORMATI.forEach(f=>{const el=document.getElementById('gd-c-'+f);const v=el?parseInt(el.value)||0:0;if(v>0)colli[f]=v});
+  c.gdo={ordine:document.getElementById('gd-ord').value.trim(),bancali:parseInt(document.getElementById('gd-banc').value)||0,colli};
+  c.stampato=false;setG(GG,lista);closeM('m-gdo');render();
+}
+function setNote(idx,val){const lista=initG(GG);lista[idx].note_ord=val.trim();setG(GG,lista)}
+function setL(idx,lottoId){const lista=initG(GG);lista[idx].lotto=lottoId;setG(GG,lista);renderLottiStrip()}
+function setPag(idx,val){const lista=initG(GG);lista[idx].pagamento=val;setG(GG,lista)}
+function rmFP(idx){const lista=initG(GG);lista.splice(idx,1);setG(GG,lista);render()}
+
+// ── GESTIONE GIRO: sposta, elimina, aggiungi ──────────
+// riga "raggiungibile" = intestazione o cliente visibile con i filtri attuali
+function rigaVisibile(c){return c.intestazione||(!c.nascosto||mostraNascosti)}
+function spostaSu(idx){
+  const lista=initG(GG);let j=idx-1;
+  while(j>=0&&!rigaVisibile(lista[j]))j--;
+  if(j<0)return;
+  const [c]=lista.splice(idx,1);lista.splice(j,0,c);
+  setG(GG,lista);if(!c.fp)syncTpl(GG,lista);render();
+}
+function spostaGiu(idx){
+  const lista=initG(GG);let j=idx+1;
+  while(j<lista.length&&!rigaVisibile(lista[j]))j++;
+  if(j>=lista.length)return;
+  const [c]=lista.splice(idx,1);lista.splice(j,0,c);
+  setG(GG,lista);if(!c.fp)syncTpl(GG,lista);render();
+}
+async function eliminaCliente(idx){
+  const lista=initG(GG);const c=lista[idx];
+  if(c.fp){if(!await chiedi('Togliere "'+c.nome+'" (fuori programma) da '+GG+'?','Togli'))return;
+    lista.splice(idx,1);setG(GG,lista);buildDtabs();render();return}
+  if(!await chiedi('Eliminare definitivamente "'+c.nome+'" dal giro di '+GG+'?\n\nNon comparirà più nelle prossime settimane.'))return;
+  lista.splice(idx,1);setG(GG,lista);syncTpl(GG,lista);
+  // presente anche in altri giorni?
+  const t=getTpl();
+  const altri=GIORNI.filter(g=>g!==GG&&(t[g]||[]).some(x=>!x.intestazione&&x.nome===c.nome));
+  if(altri.length&&await chiedi('"'+c.nome+'" è presente anche nel giro di: '+altri.join(', ')+'.\n\nEliminarlo anche da questi giorni?','Elimina anche lì')){
+    altri.forEach(g=>{const l=initG(g).filter(x=>x.intestazione||x.fp||x.nome!==c.nome);setG(g,l);syncTpl(g,l)});
+  }
+  buildAna();buildDtabs();render();
+}
+// zone (intestazioni) di un giorno
+function zoneDi(g){return (getTpl()[g]||[]).filter(c=>c.intestazione).map(c=>c.nome)}
+function fillZone(selId,g,pref){
+  const z=zoneDi(g);const sel=document.getElementById(selId);
+  const opts=[];
+  // se il giro ha clienti prima della prima intestazione, offri "Senza zona"
+  const tl=getTpl()[g]||[];
+  if(!z.length||!tl.length||!tl[0].intestazione)opts.push(['','Senza zona (in cima)']);
+  z.forEach(n=>opts.push([n,n]));
+  sel.innerHTML=opts.map(([v,l])=>`<option value="${v.replace(/"/g,'&quot;')}"${v===pref?' selected':''}>${l}</option>`).join('');
+}
+function fillGiorni(selId,def,escludi){
+  document.getElementById(selId).innerHTML=GIORNI.filter(g=>g!==escludi).map(g=>`<option value="${g}"${g===def?' selected':''}>${g}</option>`).join('');
+}
+// inserisce c nella lista in fondo alla zona indicata ('' = in cima, prima della prima intestazione)
+function inserisciInZona(lista,c,zona){
+  let pos;
+  if(!zona){pos=lista.findIndex(x=>x.intestazione);if(pos<0)pos=lista.length}
+  else{
+    const h=lista.findIndex(x=>x.intestazione&&x.nome===zona);
+    if(h<0)pos=lista.length;
+    else{pos=h+1;while(pos<lista.length&&!lista[pos].intestazione)pos++}
+  }
+  lista.splice(pos,0,c);
+}
+// zona in cui si trova la riga idx
+function zonaDiRiga(lista,idx){for(let j=idx;j>=0;j--)if(lista[j].intestazione)return lista[j].nome;return''}
+function openNuovo(){
+  document.getElementById('nc-nome').value='';document.getElementById('nc-prov').value='';
+  fillGiorni('nc-giorno',GG);fillZone('nc-zona',GG);
+  document.getElementById('m-nuovo').classList.add('open');
+  setTimeout(()=>document.getElementById('nc-nome').focus(),100);
+}
+function salvaNuovo(){
+  const nome=document.getElementById('nc-nome').value.trim();
+  if(!nome){avviso('Inserisci il nome del cliente');return}
+  const g=document.getElementById('nc-giorno').value,zona=document.getElementById('nc-zona').value;
+  const lista=initG(g);
+  if(lista.some(x=>!x.intestazione&&x.nome.toLowerCase()===nome.toLowerCase())){avviso('"'+nome+'" è già presente nel giro di '+g);return}
+  inserisciInZona(lista,clienteBase({nome,prov:document.getElementById('nc-prov').value.trim().toUpperCase()}),zona);
+  setG(g,lista);syncTpl(g,lista);buildAna();closeM('m-nuovo');
+  if(g!==GG)GG=g;buildDtabs();render();
+  setTimeout(()=>{[...document.querySelectorAll('#tbody td.td-cl')].find(td=>td.textContent.startsWith(nome))?.scrollIntoView({behavior:'smooth',block:'center'})},60);
+}
+let SP_IDX=null;
+function openSposta(idx){
+  SP_IDX=idx;const lista=initG(GG);
+  document.getElementById('sp-nome').textContent=lista[idx].nome;
+  document.getElementById('sp-da').textContent=GG;
+  const altro=GIORNI.find(g=>g!==GG);
+  fillGiorni('sp-giorno',altro,GG);
+  fillZone('sp-zona',altro,zonaDiRiga(lista,idx));
+  document.getElementById('m-sposta').classList.add('open');
+}
+function salvaSposta(){
+  const g=document.getElementById('sp-giorno').value,zona=document.getElementById('sp-zona').value;
+  const da=initG(GG);const c=da[SP_IDX];
+  const dest=initG(g);
+  if(dest.some(x=>!x.intestazione&&x.nome===c.nome)){avviso('"'+c.nome+'" è già presente nel giro di '+g);return}
+  da.splice(SP_IDX,1);setG(GG,da);if(!c.fp)syncTpl(GG,da);
+  c.stampato=false;inserisciInZona(dest,c,zona);setG(g,dest);if(!c.fp)syncTpl(g,dest);
+  closeM('m-sposta');buildDtabs();render();
+}
+function toggleNascosto(idx){
+  const lista=initG(GG);
+  if(lista[idx].intestazione)return;
+  lista[idx].nascosto=!lista[idx].nascosto;
+  // se nascondo, azzero anche l'ordine
+  if(lista[idx].nascosto){lista[idx].formati={};lista[idx].lotto='';lista[idx].stampato=false;}
+  setG(GG,lista);buildDtabs();render();
+}
+
+function rebuildRbar(){
+  const lista=initG(GG);
+  const visibili=lista.filter(c=>!c.intestazione&&!c.nascosto);
+  const nNasc=lista.filter(c=>c.nascosto).length;
+  const totU=visibili.reduce((s,c)=>s+totUova(c),0);
+  const nOrd=visibili.filter(c=>totUova(c)>0).length;
+  const nSt=visibili.filter(c=>c.stampato).length;
+  const conf=totConfezioni(visibili);
+  const tempo=tempoConfezionamento(conf);
+  document.getElementById('rbar').innerHTML=`
+    <div class="rb-item"><span class="rl">Clienti attivi</span><span class="rv">${visibili.length}${nNasc?` <span style="font-size:12px;opacity:.5">(${nNasc} nasc.)</span>`:''}</span></div>
+    <div class="rb-item"><span class="rl">Ordinano</span><span class="rv">${nOrd}</span></div>
+    <div class="rb-item"><span class="rl">Uova totali</span><span class="rv">${totU.toLocaleString('it')}</span></div>
+    <div class="rb-item rb-eur"><span class="rl">Fatturato giorno</span><span class="rv">${fmtEur(visibili.reduce((s,c)=>s+totImporto(c),0))}</span></div>
+    <div class="rb-item rb-time" onclick="openTempi()" title="Imposta i tempi per confezione">
+      <span class="rl">Tempo confezionamento</span><span class="rv">${tempo.mancanti.length&&tempo.sec===0?'<span style="font-size:12px;opacity:.75">⏱ imposta i tempi</span>':fmtDurata(tempo.sec)+(tempo.mancanti.length?' <span style="font-size:11px;opacity:.7" title="Manca il tempo per: '+tempo.mancanti.join(', ')+'">*</span>':'')}</span></div>
+    <div class="rb-item"><span class="rl">Stampati</span><span class="rv">${nSt}/${nOrd}</span></div>`;
+  aggiornaPulsantiStampa(lista);
+  // riga totali confezioni sotto l'intestazione della tabella
+  const tr=document.getElementById('tot-row');
+  if(tr)tr.innerHTML=`<td class="tr-l">Totale confezioni</td><td></td>${FORMATI.map(f=>`<td class="tr-q${conf[f]?'':' z'}">${conf[f]||'—'}</td>`).join('')}
+    <td class="tr-q">${visibili.reduce((s,c)=>s+totPlat(c),0)} plt</td><td class="tr-q" style="text-align:right;padding-right:10px">${fmtEur(visibili.reduce((s,c)=>s+totImporto(c),0))}</td><td colspan="3"></td>`;
+}
+function totConfezioni(lista){const r={};lista.forEach(c=>Object.entries(c.formati||{}).forEach(([f,q])=>{r[f]=(r[f]||0)+q}));return r}
+
+// ── TEMPI DI CONFEZIONAMENTO ──────────────────────────
+// secondi necessari per preparare una confezione di ogni formato
+function getTempi(){return LS.g('slv_tempi_v1',{})}
+function setTempi(t){localStorage.setItem('slv_tempi_ts',String(Date.now()));LS.s('slv_tempi_v1',t)}
+function tempoConfezionamento(conf){
+  const t=getTempi();let sec=0;const mancanti=[];
+  Object.entries(conf).forEach(([f,q])=>{if(!q)return;const s=+t[f];if(s>0)sec+=s*q;else mancanti.push(f)});
+  return{sec,mancanti};
+}
+function fmtDurata(sec){
+  if(!sec)return '0 min';
+  const m=Math.round(sec/60);const hh=Math.floor(m/60),mm=m%60;
+  return hh?hh+' h '+String(mm).padStart(2,'0')+' min':mm+' min';
+}
+function openTempi(){
+  const t=getTempi();
+  document.getElementById('tempi-fields').innerHTML=FORMATI.map(f=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+      <label style="width:70px;font-size:11px;font-weight:700;color:var(--bark);margin:0">${f}</label>
+      <div style="font-size:10px;color:var(--bark);width:70px">${UPF[f]} uova</div>
+      <input type="number" min="0" step="1" id="tm-${f}" value="${t[f]||''}" placeholder="—" style="width:90px;padding:5px 8px;border:1.5px solid var(--tan);border-radius:6px;font-size:13px;text-align:right">
+      <span style="font-size:11px;color:var(--bark)">secondi</span>
+    </div>`).join('');
+  document.getElementById('m-tempi').classList.add('open');
+}
+function salvaTempi(){
+  const t={};FORMATI.forEach(f=>{const v=parseFloat(document.getElementById('tm-'+f).value);if(v>0)t[f]=v});
+  setTempi(t);closeM('m-tempi');rebuildRbar();if(PAGE==='dash')renderDash();
+}
+
+// ── FUORI PROGRAMMA ───────────────────────────────────
+let ANA=[];
+function buildAna(){ANA=[];const s=new Set();const t=getTpl();GIORNI.forEach(g=>(t[g]||[]).forEach(c=>{if(!c.intestazione&&!s.has(c.nome)){s.add(c.nome);ANA.push(c)}}));
+  const dl=document.getElementById('ana-list');if(dl)dl.innerHTML=ANA.map(c=>`<option value="${c.nome.replace(/"/g,'&quot;')}">`).join('')}
+function openFP(){
+  ['fp-nome','fp-prov','fp-nc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fp-sug-list').style.display='none';
+  document.getElementById('m-fp').classList.add('open');
+  setTimeout(()=>document.getElementById('fp-nome').focus(),100);
+}
+function fpSug(){
+  const q=document.getElementById('fp-nome').value.trim().toLowerCase();
+  const s=document.getElementById('fp-sug-list');
+  if(q.length<2){s.style.display='none';return}
+  const m=ANA.filter(c=>c.nome.toLowerCase().includes(q)).slice(0,8);
+  if(!m.length){s.style.display='none';return}
+  s.style.display='block';
+  s.innerHTML=m.map(c=>`<div style="padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--tan)"
+    onclick="fpSel('${c.nome.replace(/'/g,"\\'")}','${c.prov||''}','${(c.note_conf||'').replace(/'/g,"\\'")}')"
+  ><b>${c.nome}</b> <span style="color:var(--bark);font-size:11px">${c.prov?'('+c.prov+')':''}</span></div>`).join('');
+}
+function fpSel(n,p,nc){
+  document.getElementById('fp-nome').value=n;
+  document.getElementById('fp-prov').value=p;
+  document.getElementById('fp-nc').value=nc;
+  document.getElementById('fp-sug-list').style.display='none';
+}
+function addFP(){
+  const nome=document.getElementById('fp-nome').value.trim();
+  if(!nome){avviso('Inserisci il nome del cliente');return}
+  const lista=initG(GG);
+  lista.push({nome,prov:document.getElementById('fp-prov').value.trim(),
+    note_conf:document.getElementById('fp-nc').value.trim(),note_ord:'',
+    formati:{},lotto:'',stampato:false,fp:true});
+  setG(GG,lista);closeM('m-fp');render();
+  setTimeout(()=>{const r=document.querySelectorAll('#tbody tr');const last=r[r.length-1];if(last)last.scrollIntoView({behavior:'smooth',block:'center'})},60);
+}
+
+// ── FINESTRE DI CONFERMA E AVVISO ─────────────────────
+let _confRes=null;
+function apriConf(msg,okLabel,annulla,stile){
+  return new Promise(res=>{
+    if(_confRes)_confRes(false);
+    _confRes=res;
+    document.getElementById('cf-msg').innerHTML=esc(msg).replace(/\n/g,'<br>');
+    const ok=document.getElementById('cf-ok');ok.textContent=okLabel;ok.className='btn '+stile;
+    document.getElementById('cf-annulla').style.display=annulla?'':'none';
+    document.getElementById('m-conf').classList.add('open');
+    setTimeout(()=>ok.focus(),50);
+  });
+}
+function chiudiConf(v){document.getElementById('m-conf').classList.remove('open');const r=_confRes;_confRes=null;if(r)r(v)}
+function chiedi(msg,okLabel){return apriConf(msg,okLabel||'Elimina',true,'btn-rust')}
+function avviso(msg){return apriConf(msg,'OK',false,'btn-moss')}
+document.addEventListener('keydown',e=>{if(!_confRes)return;if(e.key==='Escape')chiudiConf(false);if(e.key==='Enter'){e.preventDefault();chiudiConf(true)}});
+
+// ── PROMEMORIA ────────────────────────────────────────
+function getProm(){return LS.g('slv_prom_v1',[])}
+function setProm(p){localStorage.setItem('slv_prom_ts',String(Date.now()));LS.s('slv_prom_v1',p)}
+function promDi(sett,g){return getProm().filter(p=>p.data===dataDi(sett,g))}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function openProm(cliente){
+  document.getElementById('pr-cli').value=cliente||'';
+  // proposta: stesso giorno della settimana successiva a quella visualizzata
+  document.getElementById('pr-data').value=addGiorni(dataDi(SETT,GG),7);
+  document.getElementById('pr-testo').value='';
+  document.getElementById('m-prom').classList.add('open');
+  setTimeout(()=>document.getElementById(cliente?'pr-testo':'pr-cli').focus(),100);
+}
+function salvaProm(){
+  const data=document.getElementById('pr-data').value;
+  const testo=document.getElementById('pr-testo').value.trim();
+  const cliente=document.getElementById('pr-cli').value.trim();
+  if(!data){avviso('Indica la data');return}
+  if(!giornoDi(data)){avviso('La data scelta è una domenica: scegli un giorno da lunedì a sabato');return}
+  if(!testo&&!cliente){avviso('Scrivi il promemoria');return}
+  const p=getProm();
+  p.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),data,cliente,testo,fatto:false,creato:OGGI});
+  setProm(p);closeM('m-prom');aggiornaDopoProm();
+}
+function toggleProm(id){const p=getProm();const x=p.find(q=>q.id===id);if(!x)return;x.fatto=!x.fatto;setProm(p);aggiornaDopoProm()}
+async function rmProm(id){if(!await chiedi('Eliminare questo promemoria?'))return;setProm(getProm().filter(q=>q.id!==id));aggiornaDopoProm()}
+function aggiornaDopoProm(){if(PAGE==='weekly')renderWeekly();else{buildDtabs();render()}}
+function promHtml(p,mostraData){
+  return`<div class="prom-it${p.fatto?' fatto':''}">
+    <span>🔔</span>
+    <span class="pt">${mostraData?'<b>'+giornoDi(p.data)+' '+fmtD(p.data)+'</b> · ':''}${p.cliente?'<b>'+esc(p.cliente)+'</b>'+(p.testo?' — ':''):''}${esc(p.testo)}</span>
+    <span class="pm">segnato il ${fmtD(p.creato)}</span>
+    <button class="btn btn-ghost btn-sm bic" onclick="toggleProm('${p.id}')" title="${p.fatto?'Riapri':'Segna come fatto'}">${p.fatto?'↺':'✓ Fatto'}</button>
+    <button class="btn btn-ghost btn-sm bic bdel" onclick="rmProm('${p.id}')" title="Elimina">🗑</button>
+  </div>`;
+}
+function renderPromBox(){
+  const l=promDi(SETT,GG).sort((a,b)=>a.fatto-b.fatto);
+  document.getElementById('prom-box').innerHTML=l.map(p=>promHtml(p,false)).join('');
+}
+
+// ── WEEKLY BASE ───────────────────────────────────────
+function riassuntoFormati(c){return FORMATI.filter(f=>(c.formati[f]||0)>0).map(f=>f+'×'+c.formati[f]).join(' ')}
+function apriGiorno(s,g){goPage('ordini');vaiSett(s,g)}
+function renderWeekly(){
+  const all=LS.g('slv_ord_v1',{});const prom=getProm();
+  let out='';
+  // promemoria scaduti e non fatti
+  const scad=prom.filter(p=>!p.fatto&&p.data<OGGI).sort((a,b)=>a.data<b.data?-1:1);
+  if(scad.length)out+=`<div class="wk-sec">⚠ Promemoria scaduti non ancora fatti</div><div style="display:flex;flex-direction:column;gap:5px">${scad.map(p=>promHtml(p,true)).join('')}</div>`;
+  // settimane dalla corrente in avanti con ordini confermati o promemoria
+  const sett=new Set([SETT_OGGI]);
+  Object.keys(all).forEach(w=>{if(w>=SETT_OGGI)sett.add(w)});
+  prom.forEach(p=>{const w=lunediDi(parseIso(p.data));if(w>=SETT_OGGI)sett.add(w)});
+  const blocchi=[...sett].sort().map(w=>{
+    const giorni=GIORNI.map(g=>{
+      const d=dataDi(w,g);if(d<OGGI)return'';
+      const lista=((all[w]||{})[g])||[];
+      const conf=lista.filter(c=>!c.intestazione&&!c.nascosto&&(totUova(c)>0||(c.note_ord||'').trim()));
+      const pr=prom.filter(p=>p.data===d);
+      if(!conf.length&&!pr.length)return'';
+      return`<div class="wd"><div class="wd-h" onclick="apriGiorno('${w}','${g}')">${g} ${fmtD(d)}${d===OGGI?' · oggi':''} →</div>
+        ${pr.length?`<div style="display:flex;flex-direction:column;gap:4px;margin:3px 0 6px">${pr.map(p=>promHtml(p,false)).join('')}</div>`:''}
+        ${conf.map(c=>`<div class="wd-r"><span class="c">${esc(c.nome)}</span><span class="f">${riassuntoFormati(c)||'—'}</span><span class="n">${esc(c.note_ord)}</span></div>`).join('')}
+      </div>`;
+    }).join('');
+    const tit=`Settimana ${fmtD(w)} – ${fmtD(addGiorni(w,5))}`;
+    return`<div class="wk-blk"><div class="wk-h"><span>${tit}</span><small>${w===SETT_OGGI?'in corso':'futura'}</small></div>
+      ${giorni||`<div class="wd" style="color:var(--bark);font-size:12px">Nessun ordine confermato né promemoria per i prossimi giorni.</div>`}</div>`;
+  }).join('');
+  out+=`<div class="wk-sec">Prossimi giorni</div>${blocchi}`;
+  // archivio settimane passate
+  const pass=Object.keys(all).filter(w=>w<SETT_OGGI).sort().reverse();
+  out+=`<div class="wk-sec">Archivio settimane passate</div>`+(pass.length?`<div class="wk-arch">${pass.map(w=>{
+    const u=GIORNI.reduce((s,g)=>s+(((all[w]||{})[g])||[]).reduce((t,c)=>t+(c.intestazione?0:totUova(c)),0),0);
+    return`<button class="btn btn-ghost" onclick="apriGiorno('${w}','Lunedi')">${fmtD(w)} – ${fmtD(addGiorni(w,5))} · ${u.toLocaleString('it')} uova</button>`;
+  }).join('')}</div>`:`<div style="font-size:12px;color:var(--bark)">Nessuna settimana passata salvata. Da qui in poi ogni settimana resta archiviata e consultabile.</div>`);
+  document.getElementById('weekly-body').innerHTML=out;
+}
+
+// ── LISTINO PREZZI ───────────────────────────────────
+let LST_EDIT=[];
+function openPrezzi(){
+  LST_EDIT=JSON.parse(JSON.stringify(getListini()));
+  renderListiniEdit();
+  document.getElementById('m-prezzi').classList.add('open');
+}
+function renderListiniEdit(){
+  const an=getAnag();
+  document.getElementById('listini-t').innerHTML=`<thead><tr><th>Nome listino</th><th title="Listino predefinito">Predef.</th>${FORMATI.map(f=>`<th>${f}</th>`).join('')}<th>Clienti</th><th></th></tr></thead><tbody>`+
+  LST_EDIT.map((l,i)=>{
+    const n=Object.values(an).filter(a=>a.listino===l.id).length;
+    return`<tr>
+      <td class="nm"><input type="text" id="ls-n-${i}" value="${esc(l.nome)}"></td>
+      <td style="text-align:center"><input type="radio" name="ls-def" id="ls-d-${i}" ${l.def?'checked':''} style="width:auto"></td>
+      ${FORMATI.map(f=>`<td class="pr"><input type="number" min="0" step="0.01" id="ls-p-${i}-${f}" value="${l.prezzi[f]||''}" placeholder="0,00"></td>`).join('')}
+      <td style="font-size:11px;color:var(--bark);text-align:center">${l.def?'tutti gli altri':n}</td>
+      <td>${LST_EDIT.length>1?`<button class="btn btn-ghost btn-sm bic bdel" onclick="delListino(${i})" title="Elimina listino">🗑</button>`:''}</td>
+    </tr>`;}).join('')+'</tbody>';
+}
+function leggiListiniEdit(){
+  LST_EDIT.forEach((l,i)=>{
+    l.nome=document.getElementById('ls-n-'+i).value.trim()||l.nome;
+    l.def=document.getElementById('ls-d-'+i).checked;
+    FORMATI.forEach(f=>{l.prezzi[f]=parseFloat(document.getElementById('ls-p-'+i+'-'+f).value)||0});
+  });
+  if(!LST_EDIT.some(l=>l.def)&&LST_EDIT.length)LST_EDIT[0].def=true;
+}
+function addListino(){
+  leggiListiniEdit();
+  LST_EDIT.push({id:'l'+Date.now().toString(36),nome:'Nuovo listino '+(LST_EDIT.length+1),def:false,prezzi:{...listinoDefault(LST_EDIT).prezzi}});
+  renderListiniEdit();
+  setTimeout(()=>{const el=document.getElementById('ls-n-'+(LST_EDIT.length-1));el.focus();el.select()},50);
+}
+async function delListino(i){
+  leggiListiniEdit();
+  const l=LST_EDIT[i];
+  if(!await chiedi('Eliminare il listino "'+l.nome+'"?\n\nI clienti a cui era assegnato useranno il listino predefinito.'))return;
+  LST_EDIT.splice(i,1);
+  if(!LST_EDIT.some(x=>x.def))LST_EDIT[0].def=true;
+  renderListiniEdit();
+}function salvaPrezzi(){
+  leggiListiniEdit();
+  const ids=new Set(LST_EDIT.map(l=>l.id));
+  // i clienti con un listino eliminato tornano al predefinito
+  const an=getAnag();let mod=false;
+  Object.values(an).forEach(a=>{if(a.listino&&!ids.has(a.listino)){a.listino='';mod=true}});
+  if(mod)setAnag(an);
+  setListini(LST_EDIT);closeM('m-prezzi');
+  if(PAGE==='clienti')renderClienti();else render();
+}
+
+// ── PAGINA CLIENTI ────────────────────────────────────
+const GG3={Lunedi:'Lun',Martedi:'Mar',Mercoledi:'Mer',Giovedi:'Gio',Venerdi:'Ven',Sabato:'Sab'};
+// elenco unico dei clienti dai giri permanenti + anagrafica (anche clienti senza giorni)
+function elencoClienti(){
+  const t=getTpl(),an=getAnag(),m={};
+  GIORNI.forEach(g=>{let zona='';(t[g]||[]).forEach(c=>{
+    if(c.intestazione){zona=c.nome;return}
+    if(!m[c.nome])m[c.nome]={nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',giri:[]};
+    m[c.nome].giri.push({g,zona});
+  })});
+  Object.keys(an).forEach(n=>{if(!m[n])m[n]={nome:n,prov:an[n].prov||'',note_conf:an[n].note_conf||'',giri:[]}});
+  return Object.values(m).sort((a,b)=>a.nome.localeCompare(b.nome,'it'));
+}
+function renderClienti(){
+  const L=getListini(),an=getAnag();
+  const fg=document.getElementById('cl-fg'),fl=document.getElementById('cl-fl');
+  const vg=fg.value,vl=fl.value;
+  fg.innerHTML='<option value="">Tutti i giorni</option><option value="-">Senza giorno</option>'+GIORNI.map(g=>`<option value="${g}"${g===vg?' selected':''}>${g}</option>`).join('');
+  if(vg==='-')fg.value='-';
+  fl.innerHTML='<option value="">Tutti i listini</option>'+L.map(l=>`<option value="${l.id}"${l.id===vl?' selected':''}>${esc(l.nome)}</option>`).join('');
+  const q=document.getElementById('cl-src').value.trim().toLowerCase();
+  const def=listinoDefault(L);
+  const tutti=elencoClienti();
+  const el=tutti.filter(c=>{
+    if(q&&!c.nome.toLowerCase().includes(q))return false;
+    if(vg==='-'&&c.giri.length)return false;
+    if(vg&&vg!=='-'&&!c.giri.some(x=>x.g===vg))return false;
+    if(vl&&listinoDi(c.nome,L).id!==vl)return false;
+    return true;
+  });
+  const nAtt=tutti.filter(c=>c.giri.length).length;
+  document.getElementById('cl-count').innerHTML=`<b>${tutti.length}</b> clienti <span>· ${nAtt} con almeno un giorno di consegna · ${tutti.length-nAtt} senza giorno</span>${el.length!==tutti.length?`<span class="f">${el.length} mostrati con i filtri</span>`:''}`;
+  document.getElementById('cl-table').innerHTML=`<thead><tr><th>Cliente</th><th>Prov.</th><th>Giorni e zone</th><th>Listino</th><th>Pagamento abituale</th><th></th></tr></thead><tbody>`+
+    (el.length?el.map(c=>{
+      const a=an[c.nome]||{};const l=listinoDi(c.nome,L);
+      const nPers=Object.values(a.prezzi||{}).filter(v=>v!==''&&v!==undefined).length;
+      return`<tr onclick="openCliente(this.dataset.n)" data-n="${esc(c.nome)}">
+        <td class="nm">${esc(c.nome)}</td>
+        <td>${esc(c.prov)}</td>
+        <td>${c.giri.length?c.giri.map(x=>`<span class="chip"><b>${GG3[x.g]}</b>${x.zona?' · '+esc(x.zona):''}</span>`).join(''):'<span class="chip none">nessun giorno</span>'}</td>
+        <td>${esc(l.nome)}${l.id===def.id&&!a.listino?' <span style="font-size:10px;color:#aaa">(predefinito)</span>':''}${nPers?`<span class="pers">+${nPers} prezzi pers.</span>`:''}</td>
+        <td>${esc(a.pagamento||'—')}</td>
+        <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm">✏️ Modifica</button></td>
+      </tr>`;}).join(''):`<tr><td colspan="6" style="text-align:center;color:var(--bark);padding:20px;cursor:default">Nessun cliente trovato</td></tr>`)+
+    `</tbody>`;
+}
+let CL_ORIG=null;
+function openCliente(nome){
+  CL_ORIG=nome;
+  const c=nome?elencoClienti().find(x=>x.nome===nome):{nome:'',prov:'',note_conf:'',giri:[]};
+  const a=(nome&&getAnag()[nome])||{};
+  document.getElementById('cl-tit').textContent=nome?'Scheda cliente':'Nuovo cliente';
+  document.getElementById('cl-nome').value=c.nome;
+  document.getElementById('cl-prov').value=c.prov;
+  document.getElementById('cl-nc').value=c.note_conf;
+  document.getElementById('cl-pag').innerHTML=PAG_OPT.map(o=>`<option value="${o}"${(a.pagamento||'')===o?' selected':''}>${o||'—'}</option>`).join('');
+  const L=getListini();
+  document.getElementById('cl-listino').innerHTML=`<option value="">${esc(listinoDefault(L).nome)} (predefinito)</option>`+
+    L.filter(l=>!l.def).map(l=>`<option value="${l.id}"${a.listino===l.id?' selected':''}>${esc(l.nome)}</option>`).join('');
+  if(a.listino&&listinoDefault(L).id===a.listino)document.getElementById('cl-listino').value='';
+  const t=getTpl();
+  document.getElementById('cl-giri').innerHTML=GIORNI.map(g=>{
+    const cur=c.giri.find(x=>x.g===g);
+    const zone=(t[g]||[]).filter(x=>x.intestazione).map(x=>x.nome);
+    const primaSenzaZona=!(t[g]||[]).length||!(t[g]||[])[0].intestazione||!zone.length;
+    const opts=(primaSenzaZona?[['','Senza zona']]:[]).concat(zone.map(z=>[z,z]));
+    const selZ=cur?cur.zona:(opts[0]?opts[0][0]:'');
+    return`<div class="cl-g"><label><input type="checkbox" id="cg-${g}" ${cur?'checked':''} onchange="document.getElementById('cz-${g}').disabled=!this.checked" style="width:auto">${g}</label>
+      <select id="cz-${g}" ${cur?'':'disabled'}>${opts.map(([v,l])=>`<option value="${esc(v)}"${v===selZ?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
+  }).join('');
+  document.getElementById('cl-prezzi').innerHTML=FORMATI.map(f=>{
+    const v=(a.prezzi||{})[f];const has=v!==undefined&&v!=='';
+    return`<div class="pz"><label>${f} · ${UPF[f]} uova</label><div>€<input type="number" min="0" step="0.01" id="cp-${f}" value="${has?v:''}" class="${has?'set':''}" oninput="this.classList.toggle('set',this.value!=='')"></div></div>`;
+  }).join('');
+  aggPlaceholderPrezzi();
+  document.getElementById('cl-del').style.display=nome?'':'none';
+  document.getElementById('m-cliente').classList.add('open');
+  if(!nome)setTimeout(()=>document.getElementById('cl-nome').focus(),100);
+}
+function aggPlaceholderPrezzi(){
+  const L=getListini();const id=document.getElementById('cl-listino').value;
+  const l=L.find(x=>x.id===id)||listinoDefault(L);
+  FORMATI.forEach(f=>{document.getElementById('cp-'+f).placeholder=((+l.prezzi[f]||0).toFixed(2)).replace('.',',')});
+}
+// applica una modifica a tutte le liste delle settimane non passate; cb(lista,g) ritorna true se ha modificato
+function settAperte(cb){
+  const a=LS.g('slv_ord_v1',{});
+  Object.keys(a).forEach(w=>{if(w<SETT_OGGI)return;let mod=false;
+    GIORNI.forEach(g=>{const l=a[w][g];if(Array.isArray(l)&&cb(l,g,w))mod=true});
+    if(mod)a[w]._ts=Date.now();});
+  LS.s('slv_ord_v1',a);
+}
+const _isC=(x,nome)=>!x.intestazione&&x.nome===nome;
+function aggiungiAGiro(nome,g,zona,dati){
+  const t=getTpl();t[g]=t[g]||[];
+  if(!t[g].some(x=>_isC(x,nome))){inserisciInZona(t[g],{nome,prov:dati.prov,note_conf:dati.note_conf},zona);setTpl(t)}
+  settAperte((l,gg)=>{if(gg!==g||l.some(x=>_isC(x,nome)))return false;inserisciInZona(l,clienteBase({nome,...dati}),zona);return true});
+}
+// ritorna le settimane in cui il cliente è rimasto perché aveva già un ordine
+function togliDaGiro(nome,g){
+  const t=getTpl();t[g]=(t[g]||[]).filter(x=>!_isC(x,nome));setTpl(t);
+  const tenuti=[];
+  settAperte((l,gg,w)=>{if(gg!==g)return false;const i=l.findIndex(x=>_isC(x,nome));if(i<0)return false;
+    if(totUova(l[i])>0){tenuti.push(g+' '+fmtD(dataDi(w,g)));return false}
+    l.splice(i,1);return true});
+  return tenuti;
+}
+function cambiaZona(nome,g,zona){
+  const t=getTpl();const i=(t[g]||[]).findIndex(x=>_isC(x,nome));
+  if(i>=0){const [c]=t[g].splice(i,1);inserisciInZona(t[g],c,zona);setTpl(t)}
+  settAperte((l,gg)=>{if(gg!==g)return false;const j=l.findIndex(x=>_isC(x,nome));if(j<0)return false;const [c]=l.splice(j,1);inserisciInZona(l,c,zona);return true});
+}
+function rinominaCliente(da,a){
+  const t=getTpl();GIORNI.forEach(g=>(t[g]||[]).forEach(x=>{if(_isC(x,da))x.nome=a}));setTpl(t);
+  // tutte le settimane, anche passate, così lo storico resta collegato al cliente
+  const o=LS.g('slv_ord_v1',{});
+  Object.keys(o).forEach(w=>{let mod=false;GIORNI.forEach(g=>(o[w][g]||[]).forEach(x=>{if(_isC(x,da)){x.nome=a;mod=true}}));if(mod)o[w]._ts=Date.now()});
+  LS.s('slv_ord_v1',o);
+  const pr=getProm();if(pr.some(p=>p.cliente===da)){pr.forEach(p=>{if(p.cliente===da)p.cliente=a});setProm(pr)}
+}
+async function salvaCliente(){
+  const nome=document.getElementById('cl-nome').value.trim().replace(/\s+/g,' ');
+  if(!nome){avviso('Inserisci il nome del cliente');return}
+  if(elencoClienti().some(c=>c.nome!==CL_ORIG&&c.nome.toLowerCase()===nome.toLowerCase())){avviso('Esiste già un cliente chiamato "'+nome+'"');return}
+  const prov=document.getElementById('cl-prov').value.trim().toUpperCase();
+  const note_conf=document.getElementById('cl-nc').value.trim();
+  const pagamento=document.getElementById('cl-pag').value;
+  const listino=document.getElementById('cl-listino').value;
+  const prezzi={};FORMATI.forEach(f=>{const v=document.getElementById('cp-'+f).value;if(v!=='')prezzi[f]=parseFloat(v)||0});
+  const giri=GIORNI.map(g=>({g,on:document.getElementById('cg-'+g).checked,zona:document.getElementById('cz-'+g).value}));
+  if(!giri.some(x=>x.on)&&!await chiedi('Non hai selezionato nessun giorno: il cliente resterà in anagrafica ma non comparirà negli ordini. Salvare comunque?','Salva'))return;
+  if(CL_ORIG&&nome!==CL_ORIG)rinominaCliente(CL_ORIG,nome);
+  const an=getAnag();const prec=(CL_ORIG&&an[CL_ORIG])||{};if(CL_ORIG)delete an[CL_ORIG];
+  an[nome]={...prec,prov,note_conf,pagamento,listino,prezzi};setAnag(an);
+  const att=(elencoClienti().find(c=>c.nome===nome)||{giri:[]}).giri;
+  const tenuti=[];
+  giri.forEach(({g,on,zona})=>{
+    const cur=att.find(x=>x.g===g);
+    if(on&&!cur)aggiungiAGiro(nome,g,zona,{prov,note_conf,pagamento});
+    else if(!on&&cur)tenuti.push(...togliDaGiro(nome,g));
+    else if(on&&cur&&cur.zona!==zona)cambiaZona(nome,g,zona);
+  });
+  // provincia e nota aggiornate nei giri e nelle settimane aperte; il pagamento abituale riempie le righe ancora senza pagamento
+  const t=getTpl();GIORNI.forEach(g=>(t[g]||[]).forEach(x=>{if(_isC(x,nome)){x.prov=prov;x.note_conf=note_conf}}));setTpl(t);
+  settAperte(l=>{let m=false;l.forEach(x=>{if(!_isC(x,nome))return;if(x.prov!==prov||x.note_conf!==note_conf){x.prov=prov;x.note_conf=note_conf;m=true}if(pagamento&&!x.pagamento){x.pagamento=pagamento;m=true}});return m});
+  closeM('m-cliente');buildAna();renderClienti();buildDtabs();
+  if(tenuti.length)avviso('"'+nome+'" è stato tolto dal giro, ma resta in questi giorni perché ha già un ordine inserito:\n'+tenuti.join('\n')+'\n\nSe l\'ordine non serve, eliminalo dalla pagina Ordini.');
+}
+async function eliminaClienteAnag(){
+  const nome=CL_ORIG;if(!nome)return;
+  if(!await chiedi('Eliminare definitivamente "'+nome+'" da tutti i giorni e dall\'anagrafica?\n\nLo storico delle settimane passate resta invariato.'))return;
+  const tenuti=[];GIORNI.forEach(g=>tenuti.push(...togliDaGiro(nome,g)));
+  const an=getAnag();delete an[nome];setAnag(an);
+  closeM('m-cliente');buildAna();renderClienti();buildDtabs();
+  if(tenuti.length)avviso('"'+nome+'" resta in questi giorni perché ha già un ordine inserito:\n'+tenuti.join('\n'));
+}
+// ── STAMPA REPORT PER ZONE ────────────────────────────
+function openReport(){
+  const lista=initG(GG);
+  document.getElementById('rp-giorno').textContent=GG;
+  // costruisci le zone: una zona per ogni intestazione + "Senza zona" per clienti prima della prima intestazione
+  const zone=[];
+  let zonaCorrente=null;
+  let clientiPrezona=[];
+  lista.forEach(c=>{
+    if(c.intestazione){
+      if(zonaCorrente===null&&clientiPrezona.length)zone.push({nome:'Senza zona',clienti:clientiPrezona});
+      zonaCorrente=c.nome;
+      zone.push({nome:c.nome,clienti:[]});
+      clientiPrezona=null;
+    } else if(!c.nascosto){
+      if(zonaCorrente===null){clientiPrezona.push(c)}
+      else zone[zone.length-1].clienti.push(c);
+    }
+  });
+  if(zonaCorrente===null&&clientiPrezona&&clientiPrezona.length)zone.push({nome:'(tutti)',clienti:clientiPrezona});
+  // mostra solo zone con almeno un cliente
+  const zoneVisibili=zone.filter(z=>z.clienti.length>0);
+  document.getElementById('rp-zone-list').innerHTML=zoneVisibili.length?zoneVisibili.map((z,i)=>{
+    const nOrd=z.clienti.filter(c=>totUova(c)>0).length;
+    return`<label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;background:#faf7f1;cursor:pointer;font-size:13px">
+      <input type="checkbox" id="rpz-${i}" ${nOrd>0?'checked':''} style="width:15px;height:15px;cursor:pointer">
+      <span style="font-weight:600;flex:1">${z.nome}</span>
+      <span style="font-size:11px;color:var(--bark)">${z.clienti.length} clienti · ${nOrd} ordini</span>
+    </label>`;
+  }).join(''):'<p style="color:var(--bark);font-size:13px">Nessun cliente per questo giorno.</p>';
+  document.getElementById('m-report').classList.add('open');
+  document.getElementById('m-report')._zone=zoneVisibili;
+}
+function rpSelAll(v){
+  document.querySelectorAll('#rp-zone-list input[type=checkbox]').forEach(cb=>cb.checked=v);
+}
+function stampaReport(){
+  const zoneVisibili=document.getElementById('m-report')._zone||[];
+  const selezionate=zoneVisibili.filter((_,i)=>{const cb=document.getElementById('rpz-'+i);return cb&&cb.checked});
+  if(!selezionate.length){avviso('Seleziona almeno una zona');return}
+  const lotti=getLotti();
+  const eur=n=>n>0?'€ '+n.toLocaleString('it',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:'always'}):'';
+  const totGen={u:0,imp:0};const perPag={};
+  const corpo=selezionate.map(z=>{
+    const clientiOrd=z.clienti.filter(c=>totUova(c)>0);
+    if(!clientiOrd.length)return'';
+    const zTot={u:0,imp:0};
+    const righe=clientiOrd.map(c=>{
+      const tu=totUova(c),ti=totImporto(c);
+      zTot.u+=tu;zTot.imp+=ti;totGen.u+=tu;totGen.imp+=ti;
+      const pg=c.pagamento||'';perPag[pg]=(perPag[pg]||0)+ti;
+      const dettaglio=FORMATI.filter(f=>(c.formati[f]||0)>0).map(f=>`${f}×${c.formati[f]}`).join(' ');
+      const note=[esc(c.note_ord||''),gdoRiassunto(c)?'<b style="font-style:normal;color:#333">'+gdoRiassunto(c)+'</b>':'',c.note_conf?'<i>⚠ '+esc(c.note_conf)+'</i>':''].filter(Boolean).join('<br>');
+      return`<tr>
+        <td class="cl">${esc(c.nome)}${c.prov?' <span class="pv">('+esc(c.prov)+')</span>':''}</td>
+        <td>${dettaglio}</td>
+        <td class="n">${tu.toLocaleString('it')}</td>
+        <td class="n"><b>${eur(ti)}</b></td>
+        <td class="c">${esc(pg)}</td>
+        <td class="nota">${note}</td>
+        <td class="w"></td>
+        <td class="w"></td>
+      </tr>`;
+    }).join('');
+    return`<div class="rz-head">${esc(z.nome)}</div>
+<table class="rt"><colgroup><col style="width:23%"><col style="width:14%"><col style="width:6%"><col style="width:9%"><col style="width:7%"><col style="width:13%"><col style="width:10%"><col style="width:18%"></colgroup>
+<thead><tr><th>Cliente</th><th>Ordine</th><th class="n">Uova</th><th class="n">Importo</th><th class="c">Pag.</th><th>Note ordine</th><th class="c hw">Importo pagato</th><th class="hw">Note autista / ufficio</th></tr></thead>
+<tbody>${righe}</tbody>
+<tfoot><tr class="ztot"><td colspan="2">Totale ${esc(z.nome)}</td><td class="n">${zTot.u.toLocaleString('it')}</td><td class="n">${eur(zTot.imp)}</td><td colspan="4"></td></tr></tfoot>
+</table>`;
+  }).join('');
+  const d=dataDi(SETT,GG);
+  const daCont=perPag['contanti']||0,daPos=perPag['POS']||0,daAss=perPag['assegno']||0;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Report ${GG} ${fmtD(d)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fff}
+body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;color:#1a1a1a;width:194mm;margin:0 auto}
+#metro{position:absolute;left:-9999px;top:0;width:1px;height:279mm}
+.rpt-head{display:flex;justify-content:space-between;align-items:stretch;gap:14px;border-bottom:2px solid #3d2e1e;padding-bottom:8px;margin-bottom:10px}
+.rpt-head h1{font-size:17px;font-weight:700;color:#3d2e1e}
+.rpt-head .sub{font-size:10.5px;color:#555;margin-top:3px}
+.box{border:1.5px solid #3d2e1e;border-radius:4px;padding:5px 9px;min-width:260px}
+.box h4{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#3d2e1e;margin-bottom:5px}
+.fld{display:flex;align-items:flex-end;gap:8px;margin:5px 0 2px;font-size:11px}
+.fld span{white-space:nowrap;font-weight:600}
+.fld i{flex:1;border-bottom:1px solid #555;height:16px}
+.rz-head{background:#3d2e1e;color:#c9a84c;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;margin:7px 0 2px;border-radius:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+table.rt{width:100%;border-collapse:collapse;margin-bottom:3px;font-size:9px;table-layout:fixed}
+table.rt thead th{background:#f0ece3;border:1px solid #cfc6b4;padding:2px 4px;font-weight:700;text-transform:uppercase;font-size:7px;letter-spacing:.2px;text-align:left}
+table.rt thead th.hw{background:#e4dccb}
+table.rt th.n,table.rt td.n{text-align:right;white-space:nowrap}
+table.rt th.c,table.rt td.c{text-align:center}
+table.rt td{padding:1px 4px;border:1px solid #ddd5c6;vertical-align:middle;height:6mm;line-height:1.2}
+table.rt td.cl{font-weight:700}
+table.rt td.w{background:#fff}
+table.rt td.nota{font-size:8.5px;color:#555;font-style:italic}
+table.rt td .pv{color:#999;font-size:8.5px;font-weight:400}
+table.rt tfoot .ztot td{background:#e8e0d0;font-weight:700;height:auto;border-top:1.5px solid #bbb}
+.rpt-footer{margin-top:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.tot-box{background:#3d2e1e;color:#fff;border-radius:5px;padding:8px 16px;display:flex;gap:26px;align-items:center}
+.tot-box span{font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;opacity:.65;display:block}
+.tot-box b{font-size:15px}
+table.inc{border-collapse:collapse;font-size:11px;width:100%}
+table.inc td{border:1px solid #bbb;padding:3px 8px;height:7.5mm}
+table.inc td.l{font-weight:600;width:58%}
+table.inc td.v{text-align:right;font-weight:700}
+table.inc tr.sep td{border-top:2px solid #3d2e1e}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media print{@page{margin:8mm;size:A4 portrait}}
+</style></head><body>
+<div class="rpt-head">
+  <div>
+    <h1>Le Selvagge — ${GG} ${fmtD(d)}</h1>
+    <div class="sub">Settimana ${numSett(SETT)} · Zone: ${selezionate.map(z=>esc(z.nome)).join(', ')}</div>
+    <div class="sub" style="color:#999">Stampato il ${new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+  </div>
+  <div class="box">
+    <h4>Autista</h4>
+    <div class="fld"><span>Nome autista</span><i></i></div>
+    <div class="fld"><span>Furgone</span><i></i></div>
+  </div>
+</div>
+${corpo}
+<div class="rpt-footer">
+  <div class="tot-box">
+    <div><span>Uova totali</span><b>${totGen.u.toLocaleString('it')}</b></div>
+    <div><span>Importo totale</span><b>${eur(totGen.imp)||'—'}</b></div>
+  </div>
+  <div class="box" style="min-width:330px">
+    <h4>Amministrazione — incassi</h4>
+    <table class="inc">
+      <tr><td class="l">Contanti da incassare</td><td class="v">${eur(daCont)||'€ 0,00'}</td></tr>
+      <tr><td class="l">Da incassare con POS</td><td class="v">${eur(daPos)||'€ 0,00'}</td></tr>
+      ${daAss?`<tr><td class="l">Da incassare con assegno</td><td class="v">${eur(daAss)}</td></tr>`:''}
+      <tr class="sep"><td class="l">Effettivo incassato in contanti</td><td class="v"></td></tr>
+      <tr><td class="l">Effettivo incassato con POS</td><td class="v"></td></tr>
+      ${daAss?`<tr><td class="l">Effettivo incassato con assegno</td><td class="v"></td></tr>`:''}
+    </table>
+  </div>
+</div>
+<div id="metro"></div>
+<script>
+// riduce tutto in proporzione perché il report stia su una sola pagina A4 orizzontale
+function adatta(){
+  const b=document.body,m=document.getElementById('metro');
+  m.style.display='none';b.style.zoom=1;
+  const disp=b.ownerDocument.createElement('div');disp.style.cssText='position:absolute;visibility:hidden;height:277mm';
+  document.documentElement.appendChild(disp);const H=disp.getBoundingClientRect().height;disp.remove();
+  let z=1,alto=b.getBoundingClientRect().height;
+  if(alto>H){z=H/alto;b.style.zoom=z;
+    // correzione fine: alcuni bordi e testi non si riducono in modo esatto
+    for(let i=0;i<20&&b.getBoundingClientRect().height>H;i++){z*=0.97;b.style.zoom=z}}
+}
+window.onload=function(){adatta();setTimeout(function(){window.print();},50);};
+<\/script>
+</body></html>`;
+  closeM('m-report');
+  apriStampa(html,'width=820,height=1000');
+}
+
+// ── STAMPA ────────────────────────────────────────────
+function stampa(idx){
+  const lista=initG(GG);const c=lista[idx];
+  const lotto=getLotti().find(l=>l.id===c.lotto);
+  printH(biglietto(c,lotto));
+  lista[idx].stampato=true;setG(GG,lista);render();
+}
+const SEL=new Set(); // clienti selezionati per la stampa (giorno visualizzato)
+function toggleSel(nome,on){if(on)SEL.add(nome);else SEL.delete(nome);aggiornaPulsantiStampa()}
+function aggiornaPulsantiStampa(lista){
+  lista=lista||initG(GG);
+  const conOrd=lista.filter(c=>!c.intestazione&&!c.nascosto&&totUova(c)>0);
+  const nSel=conOrd.filter(c=>SEL.has(c.nome)).length;
+  const nDa=conOrd.filter(c=>!c.stampato).length;
+  const bs=document.getElementById('btn-stsel');if(!bs)return;
+  bs.style.display=nSel?'':'none';document.getElementById('n-sel').textContent=nSel;
+  document.getElementById('n-da').textContent=nDa;
+  document.getElementById('btn-stda').disabled=!nDa;document.getElementById('btn-stda').style.opacity=nDa?'':'.5';
+}
+function stampaSelezionati(){
+  const lista=initG(GG);const lotti=getLotti();
+  const da=lista.filter(c=>!c.intestazione&&!c.nascosto&&totUova(c)>0&&SEL.has(c.nome));
+  if(!da.length){avviso('Seleziona almeno un ordine con la casella accanto al nome');return}
+  printH(da.map(c=>biglietto(c,lotti.find(l=>l.id===c.lotto))).join('<div style="page-break-after:always"></div>'));
+  da.forEach(c=>c.stampato=true);setG(GG,lista);SEL.clear();render();
+}
+function stampaTutti(){
+  const lista=initG(GG);const lotti=getLotti();
+  const da=lista.filter(c=>!c.intestazione&&!c.nascosto&&totUova(c)>0&&!c.stampato);
+  if(!da.length){avviso('Tutti gli ordini del giorno sono già stati stampati');return}
+  printH(da.map(c=>biglietto(c,lotti.find(l=>l.id===c.lotto))).join('<div style="page-break-after:always"></div>'));
+  da.forEach(c=>c.stampato=true);SEL.clear();setG(GG,lista);render();
+}
+function biglietto(c,lotto){
+  const righe=FORMATI.filter(f=>(c.formati[f]||0)>0).map(f=>
+    `<tr><td>${f}</td><td align="center">${c.formati[f]}</td><td align="center">${UPF[f]*c.formati[f]}</td><td align="center">${lotto&&lotto.scadenza?fmtD(lotto.scadenza):(lotto?lotto.nome:'')}</td></tr>`
+  ).join('');
+  const tu=totUova(c),tp=totPlat(c);
+  return`<div class="biglietto">
+    <div style="font-weight:700;font-size:13px;border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:4px">${c.nome}${c.prov?' ('+c.prov+')':''}</div>
+    <div style="font-size:10px;margin-bottom:5px">${GG.toUpperCase()}${lotto?' · '+lotto.nome+(lotto.scadenza?' · LOTTO '+fmtD(lotto.scadenza):''):''}</div>
+    <table width="100%" style="border-collapse:collapse;font-size:10px">
+      <tr style="background:#eee"><th align="left">Formato</th><th>Pz</th><th>Uova</th><th>Lotto</th></tr>
+      ${righe}
+    </table>
+    <div style="border-top:1px solid #000;margin-top:4px;padding-top:4px;font-weight:700">TOTALE: ${tu.toLocaleString('it')} uova · ${tp} plateau</div>
+    ${c.note_conf?`<div style="font-size:10px;font-style:italic;margin-top:3px">⚠ ${c.note_conf}</div>`:''}
+    ${c.note_ord?`<div style="font-size:10px;margin-top:3px">📝 ${c.note_ord}</div>`:''}
+    ${gdoRiassunto(c)?`<div style="font-size:11px;margin-top:4px;border:1px solid #000;padding:3px 5px;font-weight:700">GDO · ${gdoRiassunto(c)}</div>`:''}
+  </div>`;
+}
+function printH(html){
+  apriStampa(`<!DOCTYPE html><html><head><style>body{margin:0;padding:6px;font-family:monospace}.biglietto{page-break-inside:avoid;border:1px solid #000;padding:7px;margin-bottom:8px}@media print{body{margin:0}}</style></head><body>${html}<script>window.onload=function(){window.print();window.close()}<\/script></body></html>`,'width=380,height=600');
+}
+// apre la stampa in una nuova finestra; se il browser blocca i popup usa un riquadro nascosto
+function apriStampa(doc,feat){
+  let w=null;try{w=window.open('','_blank',feat)}catch{}
+  if(w){w.document.write(doc);w.document.close();return}
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);f.contentDocument.open();f.contentDocument.write(doc);f.contentDocument.close();
+  setTimeout(()=>f.remove(),120000);
+}
+
+// ── LOTTI ─────────────────────────────────────────────
+// consumo in uova per lotto, sommando gli ordini di tutte le settimane
+function consumoLotti(){
+  const r={};const all=LS.g('slv_ord_v1',{});
+  Object.values(all).forEach(sw=>GIORNI.forEach(g=>(((sw||{})[g])||[]).forEach(c=>{
+    if(c.lotto&&!c.intestazione)r[c.lotto]=(r[c.lotto]||0)+totUova(c);
+  })));
+  return r;
+}
+function fmtEur(n){return '€ '+n.toLocaleString('it',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:'always'})}
+function uovaLotto(l){return l.uova!==undefined?(+l.uova||0):(l.plat||0)*30}
+function fmtU(n){return Math.round(n).toLocaleString('it',{useGrouping:'always'})}
+const LCOL=['#4a6741','#a0522d','#c9a84c','#5b7fa6','#8b6e4e','#7a5c8e','#3f8f8a'];
+function statoLotti(){
+  const u=consumoLotti();
+  return getLotti().map((l,i)=>{const tot=uovaLotto(l);const used=u[l.id]||0;return{...l,col:l.colore||LCOL[i%LCOL.length],tot,used,rem:tot-used}});
+}
+// ordine: prima il lotto che scade prima
+function lottiAperti(){const k=l=>l.scadenza||'9999'+(l.data||'');return statoLotti().filter(l=>!l.chiuso).sort((a,b)=>k(a)<k(b)?-1:1)}
+function etichettaLotto(l){return l?(l.scadenza?'Lotto '+fmtD(l.scadenza):'lotto senza scadenza'):''}
+// lotto in uso: quello scelto, altrimenti il più vecchio aperto con uova rimaste
+function lottoInUso(){const a=lottiAperti();return a.find(l=>l.uso)||a.find(l=>l.rem>0)||null}
+function fmtPlt(uova){const p=uova/30;return Number.isInteger(p)?p.toLocaleString('it'):p.toLocaleString('it',{maximumFractionDigits:1})}
+function clsRem(l){const pct=l.tot>0?l.rem/l.tot*100:0;return l.rem<=0?'r':pct<=15?'g':'v'}
+function renderLottiStrip(){
+  const el=document.getElementById('lotti-strip');if(!el)return;
+  const a=lottiAperti();const u=lottoInUso();
+  el.innerHTML=a.map(l=>`<div class="lchip${u&&u.id===l.id?' uso':''}${l.rem<=0?' r':''}" onclick="goPage('lotti')" title="Apri la pagina Lotti">
+      <div><div class="ln">${esc(l.nome)}${u&&u.id===l.id?' <span class="luso" style="font-size:9px;padding:1px 6px">in uso</span>':''}</div>
+      <div class="ls">${l.scadenza?'scad. '+fmtD(l.scadenza)+' · ':''}${l.rem<=0?'esaurito':'rimaste'}</div></div>
+      <div class="lv">${fmtU(Math.max(l.rem,0))}<small>uova</small></div>
+    </div>`).join('')+
+    `<div class="lchip lchip-add" onclick="openNuovoLotto()">${a.length?'+ Lotto':'Nessun lotto aperto · + Nuovo lotto'}</div>`;
+}
+function renderLotti(){
+  const tutti=statoLotti();const a=lottiAperti();const u=lottoInUso();
+  const grid=document.getElementById('lotti-grid');
+  grid.innerHTML=a.length?a.map(l=>{
+    const pct=l.tot>0?Math.min(100,Math.max(0,l.rem/l.tot*100)):0;const cls=clsRem(l);const inUso=u&&u.id===l.id;
+    return`<div class="lotto-card${inUso?' uso':''}${l.rem<=0?' esaurito':''}">
+      <div class="lotto-head" style="margin-bottom:10px;align-items:center">
+        <div class="ldot" style="background:${l.col};margin-top:0"></div>
+        <div><div class="lnome">${esc(l.nome)}</div><div class="lscad${l.scadenza?'':' manca'}">${l.scadenza?'Lotto / scadenza '+fmtD(l.scadenza):'⚠ manca il lotto (scadenza)'}</div><div class="lsub">arrivato il ${l.data?fmtD(l.data):'—'}${l.note?' · '+esc(l.note):''}</div></div>
+        ${inUso?'<span class="luso">in uso</span>':''}
+      </div>
+      <div class="lrem ${cls}">${l.rem<=0?'Esaurito':fmtU(l.rem)}${l.rem>0?'<small>uova rimaste</small>':''}</div>
+      <div class="luova">${l.rem<0?'superato di '+fmtU(-l.rem)+' uova: controlla le quantità o il carico':'&nbsp;'}</div>
+      <div class="lbig-bar"><div class="lbar ${cls}" style="width:${pct}%"></div></div>
+      <div class="lmeta"><span>Entrate ${fmtU(l.tot)} uova</span><span>Usate ${fmtU(l.used)} uova</span></div>
+      <div class="lact">
+        ${inUso?'':`<button class="btn btn-moss btn-sm" onclick="setUso('${l.id}')">Metti in uso</button>`}
+        <button class="btn btn-ghost btn-sm" onclick="openEditLotto('${l.id}')">✏️ Modifica</button>
+        <button class="btn btn-ghost btn-sm" onclick="chiudiLotto('${l.id}')">${l.rem<=0?'✓ Chiudi lotto':'Chiudi lotto'}</button>
+      </div>
+    </div>`;}).join(''):'<div style="color:var(--bark);padding:20px;font-size:13px">Nessun lotto aperto. Premi "+ Nuovo lotto" quando arriva un carico.</div>';
+  const ch=tutti.filter(l=>l.chiuso).sort((x,y)=>(x.data||'')<(y.data||'')?1:-1);
+  document.getElementById('lotti-arch').innerHTML=ch.length?`<div class="wk-sec">Lotti chiusi</div>
+    <table class="ct" style="background:var(--white);border:1.5px solid var(--tan);border-radius:9px;overflow:hidden"><thead><tr><th>Lotto</th><th>Scadenza</th><th>Arrivo</th><th>Uova entrate</th><th>Uova usate</th><th>Differenza</th><th></th></tr></thead><tbody>
+    ${ch.map(l=>`<tr style="cursor:default"><td class="nm">${esc(l.nome)}</td><td>${l.scadenza?fmtD(l.scadenza):'—'}</td><td>${l.data?fmtD(l.data):'—'}</td><td>${fmtU(l.tot)}</td><td>${fmtU(l.used)}</td>
+      <td style="color:${l.rem===0?'var(--moss)':'var(--rust)'}">${l.rem===0?'pari':(l.rem>0?'+':'')+fmtU(l.rem)+' uova'}</td>
+      <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="riapriLotto('${l.id}')">Riapri</button> <button class="btn btn-ghost btn-sm bdel" onclick="eliminaLotto('${l.id}')" title="Elimina lotto">🗑 Elimina</button></td></tr>`).join('')}
+    </tbody></table>`:'';
+}
+function setUso(id){const L=getLotti();L.forEach(l=>l.uso=(l.id===id));setLotti(L);renderLotti();renderLottiStrip()}
+async function chiudiLotto(id){
+  const l=statoLotti().find(x=>x.id===id);if(!l)return;
+  if(l.rem>0&&!await chiedi('Il lotto "'+l.nome+'" ha ancora '+fmtU(l.rem)+' uova.\n\nChiuderlo comunque? Non comparirà più tra i lotti in uso.','Chiudi lotto'))return;
+  const L=getLotti();const x=L.find(y=>y.id===id);x.chiuso=true;x.uso=false;setLotti(L);renderLotti();renderLottiStrip();
+}
+function riapriLotto(id){const L=getLotti();const x=L.find(y=>y.id===id);if(!x)return;x.chiuso=false;setLotti(L);renderLotti();renderLottiStrip()}
+function openNuovoLotto(){
+  document.getElementById('nl-nome').value='';
+  document.getElementById('nl-data').value=OGGI;
+  document.getElementById('nl-scad').value='';
+  document.getElementById('nl-uova').value='';
+  document.getElementById('nl-note').value='';
+  const u=lottoInUso();document.getElementById('nl-uso').checked=!u||u.rem<=0;
+  document.getElementById('m-lotto').classList.add('open');
+  setTimeout(()=>document.getElementById('nl-nome').focus(),100);
+}
+function salvaLotto(){
+  const nome=document.getElementById('nl-nome').value.trim();
+  if(!nome){avviso('Inserisci il nome del lotto');return}
+  const uova=parseInt(document.getElementById('nl-uova').value)||0;
+  if(!uova){avviso('Inserisci il numero di uova in ingresso');return}
+  const scadenza=document.getElementById('nl-scad').value;
+  if(!scadenza){avviso('Inserisci il lotto, cioè la data di scadenza');return}
+  const L=getLotti();const id='l'+Date.now();
+  const uso=document.getElementById('nl-uso').checked;
+  if(uso)L.forEach(l=>l.uso=false);
+  L.push({id,nome,scadenza,data:document.getElementById('nl-data').value,uova,note:document.getElementById('nl-note').value.trim(),uso,chiuso:false});
+  setLotti(L);closeM('m-lotto');renderLotti();renderLottiStrip();if(PAGE==='ordini')render();
+}
+function openEditLotto(id){
+  const l=getLotti().find(x=>x.id===id);if(!l)return;
+  document.getElementById('el-id').value=id;
+  document.getElementById('el-nome').value=l.nome;
+  document.getElementById('el-data').value=l.data||'';
+  document.getElementById('el-scad').value=l.scadenza||'';
+  document.getElementById('el-uova').value=uovaLotto(l);
+  document.getElementById('el-note').value=l.note||'';
+  document.getElementById('m-editlotto').classList.add('open');
+}
+function saveEditLotto(){
+  const id=document.getElementById('el-id').value;
+  const L=getLotti();const x=L.find(l=>l.id===id);if(!x)return;
+  x.nome=document.getElementById('el-nome').value.trim()||x.nome;
+  x.data=document.getElementById('el-data').value;
+  x.scadenza=document.getElementById('el-scad').value;
+  x.uova=parseInt(document.getElementById('el-uova').value)||0;delete x.plat;
+  x.note=document.getElementById('el-note').value.trim();
+  setLotti(L);closeM('m-editlotto');renderLotti();renderLottiStrip();
+}
+function delLotto(){eliminaLotto(document.getElementById('el-id').value)}
+async function eliminaLotto(id){
+  const l=getLotti().find(x=>x.id===id);if(!l)return;
+  const usato=(consumoLotti()[id]||0)>0;
+  if(!await chiedi(usato?'Il lotto "'+l.nome+'" è assegnato a degli ordini: eliminandolo, quegli ordini resteranno senza lotto.\n\nEliminarlo comunque?':'Eliminare definitivamente il lotto "'+l.nome+'"?'))return;
+  setLotti(getLotti().filter(x=>x.id!==id));closeM('m-editlotto');renderLotti();renderLottiStrip();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDash(){
+  const all=LS.g('slv_ord_v1',{});const sett=(all[SETT]||{});
+  let totU=0,totC=0,totPT=0,totE=0,totT=0;
+  const pg=GIORNI.map(g=>{
+    const lista=(sett[g]||[]).filter(c=>!c.intestazione&&!c.nascosto);
+    const e=lista.reduce((s,c)=>s+totImporto(c),0);totE+=e;
+    const u=lista.reduce((s,c)=>s+totUova(c),0);
+    const p=lista.reduce((s,c)=>s+totPlat(c),0);
+    const n=lista.filter(c=>totUova(c)>0).length;
+    const tc=tempoConfezionamento(totConfezioni(lista)).sec;totT+=tc;
+    totU+=u;totC+=n;totPT+=p;return{g,u,p,n,e,tc};
+  });
+  const lotti=getLotti();
+  document.getElementById('dash-grid').innerHTML=`
+    <div class="dc"><label>Uova settimana</label><div class="big">${totU.toLocaleString('it')}</div><div class="dsub">settimana dal ${fmtD(SETT)}</div></div>
+    <div class="dc"><label>Fatturato settimana</label><div class="big">${fmtEur(totE)}</div></div>
+    <div class="dc"><label>Tempo confezionamento</label><div class="big">${totT?fmtDurata(totT):'—'}</div><div class="dsub">${totT?'totale settimana':'imposta i tempi dalla pagina Ordini'}</div></div>
+    <div class="dc"><label>Clienti attivi</label><div class="big">${totC}</div><div class="dsub">con almeno un ordine</div></div>
+    <div class="dc"><label>Lotti aperti</label><div class="big">${lottiAperti().length}</div></div>`;
+  const max=Math.max(...pg.map(x=>x.u),1);
+  document.getElementById('dash-det').innerHTML=pg.map(({g,u,p,n,e,tc})=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--tan)">
+      <div style="width:80px;font-weight:600;font-size:13px">${g}</div>
+      <div style="flex:1;height:12px;background:var(--tan);border-radius:6px;overflow:hidden">
+        <div style="height:100%;background:var(--moss-light);border-radius:6px;width:${Math.round(u/max*100)}%"></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;min-width:100px;text-align:right">${u.toLocaleString('it')} uova</div>
+      <div style="font-size:11px;color:var(--bark);min-width:50px">${n} clienti</div>
+      <div style="font-size:12px;color:var(--bark);min-width:80px;text-align:right">⏱ ${tc?fmtDurata(tc):'—'}</div>
+      <div style="font-size:13px;font-weight:700;min-width:100px;text-align:right;color:var(--earth)">${fmtEur(e)}</div>
+    </div>`).join('');
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function closeM(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.moverlay').forEach(m=>m.addEventListener('click',e=>{if(e.target!==m)return;if(m.id==='m-conf')chiudiConf(false);else m.classList.remove('open')}));
+
+// correzioni alle zone dei giri, applicate una volta ai dati già salvati (idempotenti)
+const CORREZIONI_ZONE=[
+  {g:'Martedi',aggiungiInCima:'BASSA BERGAMASCA'},
+  {g:'Giovedi',aggiungiInCima:'BERGAMO'},
+  {g:'Martedi',rimuovi:"CREMONA E LODI - CAZZAMALI"},
+  {g:'Mercoledi',aggiungiInCima:'GDO'},
+  {g:'Venerdi',aggiungiInCima:'GDO'},
+  {g:'Sabato',aggiungiInCima:'BASSA BERGAMASCA'},
+  {g:'Sabato',rimuoviZonaEClienti:'SPEDIZIONI - RITIRO'},
+  {g:'Sabato',rimuoviZonaEClienti:'KUCCAGNA - CONSEGNA'},
+  ...GIORNI.map(g=>({g,aggiungiInFondo:'FUORI PROGRAMMA'})),
+];
+// tpl=true sul giro permanente: i clienti tolti restano in anagrafica
+// tpl=false sulle settimane: restano le righe che hanno già un ordine
+function correggiLista(l,op,tpl){
+  if(!Array.isArray(l)||!l.length)return false;
+  if(op.rimuoviZonaEClienti){
+    const i=l.findIndex(x=>x.intestazione&&x.nome.startsWith(op.rimuoviZonaEClienti));
+    if(i<0)return false;
+    let j=i+1;while(j<l.length&&!l[j].intestazione)j++;
+    const tolti=l.slice(i+1,j);
+    const tenuti=tpl?[]:tolti.filter(c=>c.fp||totUova(c)>0);
+    if(tpl){const an=getAnag();let mod=false;
+      tolti.forEach(c=>{if(!an[c.nome]){an[c.nome]={prov:c.prov||'',note_conf:c.note_conf||''};mod=true}});
+      if(mod)setAnag(an);}
+    l.splice(i,j-i,...tenuti);return true;
+  }
+  if(op.aggiungiInCima){
+    if(l[0].intestazione||l.some(x=>x.intestazione&&x.nome===op.aggiungiInCima))return false;
+    l.unshift({intestazione:true,nome:op.aggiungiInCima});return true;
+  }
+  if(op.aggiungiInFondo){
+    if(l.some(x=>x.intestazione&&x.nome===op.aggiungiInFondo))return false;
+    // prima degli eventuali fuori programma già inseriti in fondo alla lista
+    let i=l.length;while(i>0&&l[i-1].fp)i--;
+    l.splice(i,0,{intestazione:true,nome:op.aggiungiInFondo});return true;
+  }
+  if(op.rimuovi){
+    const i=l.findIndex(x=>x.intestazione&&x.nome.startsWith(op.rimuovi));
+    if(i<0)return false;l.splice(i,1);return true;
+  }
+  return false;
+}
+function applicaCorrezioniZone(){
+  const t=getTpl();let mt=false;
+  CORREZIONI_ZONE.forEach(op=>{if(correggiLista(t[op.g],op,true))mt=true});
+  if(mt)setTpl(t);
+  const o=LS.g('slv_ord_v1',{});let mo=false;
+  Object.keys(o).forEach(w=>{let m=false;CORREZIONI_ZONE.forEach(op=>{if(correggiLista(o[w][op.g],op))m=true});if(m){o[w]._ts=Date.now();mo=true}});
+  if(mo)LS.s('slv_ord_v1',o);
+}
+
+// ── INIT ──────────────────────────────────────────────
+// ── ACCESSO ───────────────────────────────────────────
+const PW_HASH='839828173fa96e678675ffb8784ec999932e429b39571bf3c9b9ecc1192aa194';
+async function sha256(t){
+  if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  return '';
+}
+async function accedi(){
+  const pw=document.getElementById('lg-pw').value;
+  if(await sha256(pw)===PW_HASH){try{localStorage.setItem('slv_ord_auth',PW_HASH)}catch(e){}avvia()}
+  else{document.getElementById('lg-err').textContent='Password errata';document.getElementById('lg-pw').select()}
+}
+let AVVIATA=false;
+async function avvia(){
+  if(AVVIATA)return;AVVIATA=true;
+  document.getElementById('login').classList.add('ok');
+  await pull();
+  applicaCorrezioniZone();
+  buildAna();buildWeekNav();buildDtabs();
+  render();
+}
+// ── INIT ──
+if(localStorage.getItem('slv_ord_auth')===PW_HASH)avvia();
+else setTimeout(()=>document.getElementById('lg-pw').focus(),100);
+// app installabile: registra il service worker solo quando la pagina è pubblicata online
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
