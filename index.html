@@ -234,6 +234,10 @@ select.lsel:hover,select.lsel:focus{border-color:var(--tan);background:var(--whi
 
 /* azioni */
 td.td-az{white-space:nowrap;text-align:center}
+table.xt.edit-nomi td.td-cl{min-width:380px;max-width:none}
+input.nome-in{width:calc(100% - 26px);font-weight:600;font-size:12.5px;padding:3px 6px;border:1.5px solid var(--straw);border-radius:4px;background:#fffdf6;color:var(--earth);font-family:'DM Sans',sans-serif}
+input.nome-in:focus{outline:none;border-color:var(--moss)}
+tr.codici-row td span{display:inline-block;margin-right:48px}
 .gdo-box{margin-top:3px;font-size:10.5px;line-height:1.3;color:var(--earth);background:#eef3ea;border:1px solid var(--moss-light);border-radius:4px;padding:2px 5px;cursor:pointer;font-weight:600}
 .gdo-box:hover{background:#e2ecdc}
 .gdo-box.manca{background:#fbf3dc;border-color:var(--straw);color:var(--rust)}
@@ -345,12 +349,12 @@ tr.intestazione-row:first-child td{border-top:0}
 </style>
 </head>
 <body>
-<div id="login"><form class="lg" onsubmit="event.preventDefault();accedi()">
+<div id="login"><div class="lg">
   <h1>Le <b>Selvagge</b></h1><p>Ordini — accesso riservato</p>
-  <input type="password" id="lg-pw" placeholder="Password" autocomplete="current-password">
-  <button type="submit">Entra</button>
+  <input type="password" id="lg-pw" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();accedi()}">
+  <button type="button" onclick="accedi()">Entra</button>
   <div class="err" id="lg-err"></div>
-</form></div>
+</div></div>
 
 <div id="nav">
   <div class="nav-brand"><span>Le <b>Selvagge</b> · Ordini</span></div>
@@ -376,6 +380,7 @@ tr.intestazione-row:first-child td{border-top:0}
     <button class="btn btn-moss" onclick="openNuovo()">+ Nuovo cliente</button>
     <button class="btn btn-straw" onclick="openFP()">+ Fuori programma</button>
     <button class="btn btn-ghost" onclick="openProm('')" style="font-size:11px">🔔 Promemoria</button>
+    <button class="btn btn-ghost" id="btn-nomi" onclick="toggleEditNomi()" style="font-size:11px" title="Modifica temporanea dei nomi dei clienti">✏️ Modifica nomi</button>
     <button class="btn btn-ghost" onclick="openPrezzi()" style="font-size:11px">€ Listini</button>
     <button class="btn btn-earth" onclick="openReport()">📋 Stampa report</button>
     <button class="btn btn-earth" id="btn-stsel" onclick="stampaSelezionati()" style="display:none">🖨 Stampa selezionati (<span id="n-sel">0</span>)</button>
@@ -655,6 +660,9 @@ tr.intestazione-row:first-child td{border-top:0}
 </div>
 
 <script>
+// archivio locale: usa quello del browser; se è bloccato (alcune anteprime protette) tiene i dati in memoria
+const ST=(()=>{try{const k='__slv_t';window.localStorage.setItem(k,'1');window.localStorage.removeItem(k);return window.localStorage}catch(e){
+  const m={};return{getItem:k=>k in m?m[k]:null,setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}};}})();
 const WORKER='https://selvagge-sync.cesare-cugini.workers.dev';
 const SYNC_KEY='selvagge_ordini';
 const SYNC_TOKEN='Selv2026xK9mPqL3nR7w'; // richiesto dal server di sincronizzazione (intestazione X-Auth-Token)
@@ -666,15 +674,15 @@ const PAG_OPT=['','contanti','POS','assegno','bonifico','RiBa','fattura','conto 
 // listini: [{id,nome,def,prezzi:{PLAT30:..}}] — il primo creato riprende il vecchio listino unico
 function getListini(){
   let L=LS.g('slv_listini_v1',null);
-  if(!L||!L.length){L=[{id:'base',nome:'Listino base',def:true,prezzi:{...PREZZI_DEFAULT,...LS.g('slv_prezzi_v1',{})}}];localStorage.setItem('slv_listini_v1',JSON.stringify(L))}
+  if(!L||!L.length){L=[{id:'base',nome:'Listino base',def:true,prezzi:{...PREZZI_DEFAULT,...LS.g('slv_prezzi_v1',{})}}];ST.setItem('slv_listini_v1',JSON.stringify(L))}
   return L;
 }
-function setListini(L){localStorage.setItem('slv_listini_ts',String(Date.now()));LS.s('slv_listini_v1',L)}
+function setListini(L){ST.setItem('slv_listini_ts',String(Date.now()));LS.s('slv_listini_v1',L)}
 function listinoDefault(L){L=L||getListini();return L.find(x=>x.def)||L[0]}
 function listinoDi(nome,L){L=L||getListini();const a=getAnag()[nome]||{};return L.find(x=>x.id===a.listino)||listinoDefault(L)}
 // anagrafica: {nome:{prov,note_conf,pagamento,listino,prezzi:{...prezzi personalizzati}}}
 function getAnag(){return LS.g('slv_anag_v1',{})}
-function setAnag(a){localStorage.setItem('slv_anag_ts',String(Date.now()));LS.s('slv_anag_v1',a)}
+function setAnag(a){ST.setItem('slv_anag_ts',String(Date.now()));LS.s('slv_anag_v1',a)}
 function prezzoCliente(nome,f){
   const a=getAnag()[nome]||{};
   if(a.prezzi&&a.prezzi[f]!==undefined&&a.prezzi[f]!=='')return +a.prezzi[f]||0;
@@ -690,8 +698,8 @@ const BASE={"Lunedi": [{"nome": "ALFI S.R.L.", "prov": "AL", "note_conf": "scat"
 
 // ── STORAGE ───────────────────────────────────────────
 const LS={
-  g(k,d=null){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
-  s(k,v){try{localStorage.setItem(k,JSON.stringify(v));sched()}catch{}}
+  g(k,d=null){try{const v=ST.getItem(k);return v?JSON.parse(v):d}catch{return d}},
+  s(k,v){try{ST.setItem(k,JSON.stringify(v));sched()}catch{}}
 };
 // ── DATE E SETTIMANE ─────────────────────────────────
 function isoLoc(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -714,10 +722,10 @@ function setG(g,lista,noTs){const a=LS.g('slv_ord_v1',{});if(!a[SETT])a[SETT]={}
 function stripTpl(c){return c.intestazione?{intestazione:true,nome:c.nome}:{nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||''}}
 function getTpl(){
   let t=LS.g('slv_giri_v1',null);
-  if(!t){t={};GIORNI.forEach(g=>t[g]=(BASE[g]||[]).map(stripTpl));localStorage.setItem('slv_giri_v1',JSON.stringify(t))}
+  if(!t){t={};GIORNI.forEach(g=>t[g]=(BASE[g]||[]).map(stripTpl));ST.setItem('slv_giri_v1',JSON.stringify(t))}
   return t;
 }
-function setTpl(t){localStorage.setItem('slv_giri_ts',String(Date.now()));LS.s('slv_giri_v1',t)}
+function setTpl(t){ST.setItem('slv_giri_ts',String(Date.now()));LS.s('slv_giri_v1',t)}
 // riscrive il giro permanente del giorno g dall'ordine della lista settimanale (esclusi i fuori programma)
 function syncTpl(g,lista){const t=getTpl();t[g]=lista.filter(c=>!c.fp).map(stripTpl);setTpl(t)}
 function clienteBase(c){
@@ -751,7 +759,7 @@ function initG(g){
   setG(g,lista,true);return lista;
 }
 function getLotti(){return LS.g('slv_lotti_v1',[])}
-function setLotti(l){localStorage.setItem('slv_lotti_ts',String(Date.now()));LS.s('slv_lotti_v1',l)}
+function setLotti(l){ST.setItem('slv_lotti_ts',String(Date.now()));LS.s('slv_lotti_v1',l)}
 
 // totale uova → plateau equivalenti (ceil)
 function totUova(c){return Object.entries(c.formati||{}).reduce((s,[f,q])=>s+(UPF[f]||0)*q,0)}
@@ -767,17 +775,17 @@ function mergeOrd(srv,loc){
   return out;
 }
 const TS_KEYS=[['giri','slv_giri_v1','slv_giri_ts'],['prom','slv_prom_v1','slv_prom_ts'],['anag','slv_anag_v1','slv_anag_ts'],['listini','slv_listini_v1','slv_listini_ts'],['lotti','slv_lotti_v1','slv_lotti_ts'],['tempi','slv_tempi_v1','slv_tempi_ts']];
-function statoLocale(){return ['slv_ord_v1','slv_giri_v1','slv_prom_v1','slv_anag_v1','slv_listini_v1','slv_lotti_v1','slv_tempi_v1'].map(k=>localStorage.getItem(k)||'').join('|')}
+function statoLocale(){return ['slv_ord_v1','slv_giri_v1','slv_prom_v1','slv_anag_v1','slv_listini_v1','slv_lotti_v1','slv_tempi_v1'].map(k=>ST.getItem(k)||'').join('|')}
 async function pullMerge(){
   const r=await fetch(WORKER+'/'+SYNC_KEY,{headers:{'X-Auth-Token':SYNC_TOKEN},cache:'no-store'});
   if(r.status===401)throw new Error('token');
   if(!r.ok)return;
   const d=await r.json();if(!d)return;
-  if(d.ord)localStorage.setItem('slv_ord_v1',JSON.stringify(mergeOrd(d.ord,LS.g('slv_ord_v1',{}))));
+  if(d.ord)ST.setItem('slv_ord_v1',JSON.stringify(mergeOrd(d.ord,LS.g('slv_ord_v1',{}))));
   TS_KEYS.forEach(([k,key,tsk])=>{
-    if(d[k]&&(d[k+'_ts']||0)>+(localStorage.getItem(tsk)||0)){localStorage.setItem(key,JSON.stringify(d[k]));localStorage.setItem(tsk,String(d[k+'_ts']))}
+    if(d[k]&&(d[k+'_ts']||0)>+(ST.getItem(tsk)||0)){ST.setItem(key,JSON.stringify(d[k]));ST.setItem(tsk,String(d[k+'_ts']))}
   });
-  if(d.lotti&&d.lotti.length&&!getLotti().length)localStorage.setItem('slv_lotti_v1',JSON.stringify(d.lotti));
+  if(d.lotti&&d.lotti.length&&!getLotti().length)ST.setItem('slv_lotti_v1',JSON.stringify(d.lotti));
 }
 function aggiornaVista(){
   const a=document.activeElement;
@@ -791,7 +799,7 @@ async function sync(){
     const prima=statoLocale();
     await pullMerge();
     const body={ord:LS.g('slv_ord_v1',{}),lotti:getLotti()};
-    TS_KEYS.forEach(([k,key,tsk])=>{body[k]=LS.g(key,null);body[k+'_ts']=+(localStorage.getItem(tsk)||0)});
+    TS_KEYS.forEach(([k,key,tsk])=>{body[k]=LS.g(key,null);body[k+'_ts']=+(ST.getItem(tsk)||0)});
     const r=await fetch(WORKER+'/'+SYNC_KEY,{method:'PUT',headers:{'Content-Type':'application/json','X-Auth-Token':SYNC_TOKEN},body:JSON.stringify(body)});
     dot(r.ok?'ok':'err');
     if(statoLocale()!==prima)aggiornaVista();
@@ -905,7 +913,7 @@ function render(){
     const noteVal=c.note_ord||'';
 
     return`<tr class="${cls}">
-      <td class="td-cl"><label class="selw" style="${tu>0&&!c.nascosto?'':'visibility:hidden'}" title="Seleziona per stampare"><input type="checkbox" class="selc" ${SEL.has(c.nome)?'checked':''} onchange="toggleSel(this.dataset.n,this.checked)" data-n="${esc(c.nome)}"></label>${c.nome}${badges}${ncHtml}</td>
+      <td class="td-cl"><label class="selw" style="${tu>0&&!c.nascosto?'':'visibility:hidden'}" title="Seleziona per stampare"><input type="checkbox" class="selc" ${SEL.has(c.nome)?'checked':''} onchange="toggleSel(this.dataset.n,this.checked)" data-n="${esc(c.nome)}"></label>${EDIT_NOMI&&!c.fp?`<input class="nome-in" type="text" value="${esc(c.nome)}" data-n="${esc(c.nome)}" onchange="rinominaDaRiga(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();this.blur()}">`:c.nome}${badges}${ncHtml}</td>
       <td class="td-n"><input class="nin${noteVal?' vv':''}" type="text" value="${noteVal.replace(/"/g,'&quot;')}" placeholder="—" onchange="setNote(${idx},this.value)">${zonaDiRiga(lista,idx)==='GDO'?`<div class="gdo-box${gdoCompleto(c)?'':' manca'}" onclick="openGdo(${idx})" title="N. ordine, colli e bancali">${gdoRiassunto(c)||'📦 inserisci dati GDO'}</div>`:''}</td>
       ${qcells}
       <td class="td-tot${tu===0?' zero':' pos'}">${tp>0?tp+' plt':'—'}</td>
@@ -920,10 +928,10 @@ function render(){
         <button class="btn btn-ghost btn-sm bic" onclick="openSposta(${idx})" title="Sposta in un altro giorno">⇄</button>
         <button class="btn btn-ghost btn-sm bic" onclick="openProm('${c.nome.replace(/\\/g,'').replace(/'/g,"\\'")}')" title="Aggiungi promemoria">🔔</button>
         <button class="btn btn-ghost btn-sm bic" onclick="toggleNascosto(${idx})" title="${c.nascosto?'Mostra':'Nascondi'}">${c.nascosto?'👁':'🚫'}</button>
-        ${c.fp?`<button class="btn btn-ghost btn-sm bic bdel" onclick="eliminaCliente(${idx})" title="Togli fuori programma">🗑</button>`:''}
+        <button class="btn btn-ghost btn-sm bic bdel" onclick="eliminaCliente(${idx})" title="${c.fp?'Togli fuori programma':'Elimina definitivamente da '+GG}">🗑</button>
       </td>
     </tr>`;
-  }).join('');
+  }).join('')+(lista.length?`<tr class="intestazione-row codici-row"><td colspan="${NCOL}">${CODICI_FONDO.map(k=>`<span>${k}</span>`).join('')}</td></tr>`:'');
 }
 
 function setQ(idx,f,val,el){
@@ -1014,15 +1022,13 @@ async function eliminaCliente(idx){
   const lista=initG(GG);const c=lista[idx];
   if(c.fp){if(!await chiedi('Togliere "'+c.nome+'" (fuori programma) da '+GG+'?','Togli'))return;
     lista.splice(idx,1);setG(GG,lista);buildDtabs();render();return}
-  if(!await chiedi('Eliminare definitivamente "'+c.nome+'" dal giro di '+GG+'?\n\nNon comparirà più nelle prossime settimane.'))return;
-  lista.splice(idx,1);setG(GG,lista);syncTpl(GG,lista);
-  // presente anche in altri giorni?
-  const t=getTpl();
-  const altri=GIORNI.filter(g=>g!==GG&&(t[g]||[]).some(x=>!x.intestazione&&x.nome===c.nome));
-  if(altri.length&&await chiedi('"'+c.nome+'" è presente anche nel giro di: '+altri.join(', ')+'.\n\nEliminarlo anche da questi giorni?','Elimina anche lì')){
-    altri.forEach(g=>{const l=initG(g).filter(x=>x.intestazione||x.fp||x.nome!==c.nome);setG(g,l);syncTpl(g,l)});
-  }
-  buildAna();buildDtabs();render();
+  const ord=totUova(c)>0?'\n\nAttenzione: in questa settimana ha già un ordine, che verrà cancellato.':'';
+  if(!await chiedi('Eliminare definitivamente "'+c.nome+'" dal '+GG.toLowerCase()+'?\n\nNon comparirà più in questo giorno, nemmeno nelle prossime settimane. Gli altri giorni non cambiano e il cliente resta nell\'anagrafica Clienti.'+ord))return;
+  // resta in anagrafica, così si può riassegnare dalla scheda Clienti
+  const an=getAnag();if(!an[c.nome]){an[c.nome]={prov:c.prov||'',note_conf:c.note_conf||''};setAnag(an)}
+  lista.splice(idx,1);setG(GG,lista);
+  togliDaGiro(c.nome,GG); // giro permanente e settimane future già aperte
+  SEL.delete(c.nome);buildAna();buildDtabs();render();
 }
 // zone (intestazioni) di un giorno
 function zoneDi(g){return (getTpl()[g]||[]).filter(c=>c.intestazione).map(c=>c.nome)}
@@ -1124,7 +1130,7 @@ function totConfezioni(lista){const r={};lista.forEach(c=>Object.entries(c.forma
 // ── TEMPI DI CONFEZIONAMENTO ──────────────────────────
 // secondi necessari per preparare una confezione di ogni formato
 function getTempi(){return LS.g('slv_tempi_v1',{})}
-function setTempi(t){localStorage.setItem('slv_tempi_ts',String(Date.now()));LS.s('slv_tempi_v1',t)}
+function setTempi(t){ST.setItem('slv_tempi_ts',String(Date.now()));LS.s('slv_tempi_v1',t)}
 function tempoConfezionamento(conf){
   const t=getTempi();let sec=0;const mancanti=[];
   Object.entries(conf).forEach(([f,q])=>{if(!q)return;const s=+t[f];if(s>0)sec+=s*q;else mancanti.push(f)});
@@ -1205,11 +1211,11 @@ function apriConf(msg,okLabel,annulla,stile){
 function chiudiConf(v){document.getElementById('m-conf').classList.remove('open');const r=_confRes;_confRes=null;if(r)r(v)}
 function chiedi(msg,okLabel){return apriConf(msg,okLabel||'Elimina',true,'btn-rust')}
 function avviso(msg){return apriConf(msg,'OK',false,'btn-moss')}
-document.addEventListener('keydown',e=>{if(!_confRes)return;if(e.key==='Escape')chiudiConf(false);if(e.key==='Enter'){e.preventDefault();chiudiConf(true)}});
+document.addEventListener('keydown',e=>{if(!_confRes||e.target.closest&&!e.target.closest('#m-conf')&&e.target!==document.body)return;if(e.key==='Escape')chiudiConf(false);if(e.key==='Enter'){e.preventDefault();chiudiConf(true)}});
 
 // ── PROMEMORIA ────────────────────────────────────────
 function getProm(){return LS.g('slv_prom_v1',[])}
-function setProm(p){localStorage.setItem('slv_prom_ts',String(Date.now()));LS.s('slv_prom_v1',p)}
+function setProm(p){ST.setItem('slv_prom_ts',String(Date.now()));LS.s('slv_prom_v1',p)}
 function promDi(sett,g){return getProm().filter(p=>p.data===dataDi(sett,g))}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function openProm(cliente){
@@ -1664,6 +1670,38 @@ function stampa(idx){
   printH(biglietto(c,lotto));
   lista[idx].stampato=true;setG(GG,lista);render();
 }
+// codici riportati in una riga fissa in fondo a ogni giorno
+const CODICI_FONDO=['UOVCAM00L','UOVCAM00S','UOVCAM00M','UOVDEC00L','UOVROT00L'];
+// ── MODIFICA NOMI (funzione temporanea per sistemare l'anagrafica) ──
+let EDIT_NOMI=false;
+function toggleEditNomi(){
+  EDIT_NOMI=!EDIT_NOMI;
+  const b=document.getElementById('btn-nomi');
+  b.textContent=EDIT_NOMI?'✓ Fine modifica nomi':'✏️ Modifica nomi';
+  b.className='btn '+(EDIT_NOMI?'btn-moss':'btn-ghost');
+  document.querySelector('table.xt').classList.toggle('edit-nomi',EDIT_NOMI);
+  render();
+}
+async function rinominaDaRiga(el){
+  const da=el.dataset.n;const a=el.value.trim().replace(/\s+/g,' ');
+  if(!a){el.value=da;avviso('Il nome non può essere vuoto');return}
+  if(a===da)return;
+  const t=getTpl();
+  // non si possono avere due clienti con lo stesso nome nello stesso giorno
+  const conflitto=GIORNI.filter(g=>(t[g]||[]).some(x=>!x.intestazione&&x.nome===da)&&(t[g]||[]).some(x=>!x.intestazione&&x.nome.toLowerCase()===a.toLowerCase()&&x.nome!==da));
+  if(conflitto.length){el.value=da;avviso('Nel giro di '+conflitto.join(', ')+' esiste già un cliente chiamato "'+a+'".');return}
+  const esistente=elencoClienti().find(c=>c.nome!==da&&c.nome.toLowerCase()===a.toLowerCase());
+  const giorni=GIORNI.filter(g=>(t[g]||[]).some(x=>!x.intestazione&&x.nome===da));
+  const msg=esistente
+    ?'"'+esistente.nome+'" esiste già in anagrafica, in altri giorni. Rinominando, i due diventano lo stesso cliente, con il listino e i prezzi di "'+esistente.nome+'".\n\nProcedere?'
+    :'Rinominare "'+da+'" in "'+a+'"?\n\nIl nome cambia in tutti i giorni in cui compare'+(giorni.length>1?' ('+giorni.join(', ')+')':'')+', nelle settimane salvate e nei promemoria.';
+  if(!await chiedi(msg,'Rinomina')){el.value=da;return}
+  const nuovo=esistente?esistente.nome:a;
+  rinominaCliente(da,nuovo);
+  const an=getAnag();if(an[da]){if(!an[nuovo])an[nuovo]=an[da];delete an[da];setAnag(an)}
+  if(SEL.has(da)){SEL.delete(da);SEL.add(nuovo)}
+  buildAna();render();
+}
 const SEL=new Set(); // clienti selezionati per la stampa (giorno visualizzato)
 function toggleSel(nome,on){if(on)SEL.add(nome);else SEL.delete(nome);aggiornaPulsantiStampa()}
 function aggiornaPulsantiStampa(lista){
@@ -1934,13 +1972,33 @@ function applicaCorrezioniZone(){
 // ── INIT ──────────────────────────────────────────────
 // ── ACCESSO ───────────────────────────────────────────
 const PW_HASH='839828173fa96e678675ffb8784ec999932e429b39571bf3c9b9ecc1192aa194';
+// SHA-256: usa la funzione del browser se disponibile, altrimenti un calcolo interno
+// (alcune anteprime, come quella di Claude, non mettono a disposizione crypto.subtle)
+function sha256js(s){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  const bytes=unescape(encodeURIComponent(s)).split('').map(c=>c.charCodeAt(0));
+  const l=bytes.length*8;bytes.push(0x80);while(bytes.length%64!==56)bytes.push(0);
+  for(let i=7;i>=0;i--)bytes.push(i>3?0:(l>>>(i*8))&0xff);
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const r=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<bytes.length;o+=64){
+    const w=new Array(64);
+    for(let i=0;i<16;i++)w[i]=(bytes[o+i*4]<<24)|(bytes[o+i*4+1]<<16)|(bytes[o+i*4+2]<<8)|bytes[o+i*4+3];
+    for(let i=16;i<64;i++){const s0=r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3),s1=r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0}
+    let [a,b,c,d,e,f,g,hh]=H;
+    for(let i=0;i<64;i++){const t1=(hh+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[i]+w[i])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&b)^(a&c)^(b&c)))|0;hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0}
+    H=H.map((v,i)=>(v+[a,b,c,d,e,f,g,hh][i])|0);
+  }
+  return H.map(v=>(v>>>0).toString(16).padStart(8,'0')).join('');
+}
 async function sha256(t){
-  if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-  return '';
+  try{if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}}catch(e){}
+  return sha256js(t);
 }
 async function accedi(){
-  const pw=document.getElementById('lg-pw').value;
-  if(await sha256(pw)===PW_HASH){try{localStorage.setItem('slv_ord_auth',PW_HASH)}catch(e){}avvia()}
+  document.getElementById('lg-err').textContent='Verifica...';
+  const pw=document.getElementById('lg-pw').value.trim();
+  if(await sha256(pw)===PW_HASH){try{ST.setItem('slv_ord_auth',PW_HASH)}catch(e){}avvia()}
   else{document.getElementById('lg-err').textContent='Password errata';document.getElementById('lg-pw').select()}
 }
 let AVVIATA=false;
@@ -1953,7 +2011,8 @@ async function avvia(){
   render();
 }
 // ── INIT ──
-if(localStorage.getItem('slv_ord_auth')===PW_HASH)avvia();
+let _auth=null;try{_auth=ST.getItem('slv_ord_auth')}catch(e){}
+if(_auth===PW_HASH)avvia();
 else setTimeout(()=>document.getElementById('lg-pw').focus(),100);
 // app installabile: registra il service worker solo quando la pagina è pubblicata online
 if('serviceWorker' in navigator&&location.protocol==='https:'){
