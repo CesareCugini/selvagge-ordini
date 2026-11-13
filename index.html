@@ -2074,13 +2074,13 @@ function stampaReport(){
         <td class="c">${c.omaggio?'—':esc(pagAbbr(pg))}</td>
         <td class="c doc">${esc(doc)}</td>
         <td class="nota">${note}</td>
-        <td class="w"></td>
+        ${!c.omaggio&&ti>0&&PAG_INCASSO.includes(pg)?'<td class="w inc"><span>€</span></td>':'<td class="w"></td>'}
         <td class="w"></td>
       </tr>`;
     }).join('');
     return`<div class="rz-head">${esc(z.nome)}</div>
 <table class="rt"><colgroup><col style="width:20%"><col style="width:13%"><col style="width:5%"><col style="width:8%"><col style="width:10%"><col style="width:8%"><col style="width:12%"><col style="width:9%"><col style="width:15%"></colgroup>
-<thead><tr><th>Cliente</th><th>Ordine</th><th class="n">Uova</th><th class="n">Importo</th><th class="c">Pag.</th><th class="c">Documento</th><th>Note ordine</th><th class="c hw">Importo pagato</th><th class="hw">Note autista / ufficio</th></tr></thead>
+<thead><tr><th>Cliente</th><th>Ordine</th><th class="n">Uova</th><th class="n">Importo</th><th class="c">Pag.</th><th class="c">Documento</th><th>Note ordine</th><th class="c hw">Importo incassato</th><th class="hw">Note autista / ufficio</th></tr></thead>
 <tbody>${righe}</tbody>
 <tfoot><tr class="ztot"><td colspan="2">Totale ${esc(z.nome)}</td><td class="n">${zTot.u.toLocaleString('it')}</td><td class="n">${eur(zTot.imp)}</td><td colspan="5"></td></tr></tfoot>
 </table>`;
@@ -2104,7 +2104,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;color:#1a1a1
 .fld{display:flex;align-items:flex-end;gap:8px;margin:5px 0 2px;font-size:11px}
 .fld span{white-space:nowrap;font-weight:600}
 .fld i{flex:1;border-bottom:1px solid #555;height:16px}
-.leg-pag{font-size:8.5px;color:#555;margin:-4px 0 6px}.leg-pag span{white-space:nowrap}
+.leg-pag{font-size:8.5px;color:#555;margin:-4px 0 6px}.leg-pag .leg-inc{display:inline-block;background:#fff6cc;border:1px solid #3d2e1e;padding:0 4px;font-weight:700;color:#3d2e1e}.leg-pag span{white-space:nowrap}
 .nota-box{border:2px solid #3d2e1e;border-radius:4px;padding:6px 10px;margin:0 0 8px;background:#fffbea}
 .nota-box h4{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#3d2e1e;margin-bottom:3px}
 .nota-box div{font-size:12px;font-weight:600;white-space:pre-wrap;line-height:1.35}
@@ -2112,6 +2112,8 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;color:#1a1a1
 table.rt{width:100%;border-collapse:collapse;margin-bottom:3px;font-size:9px;table-layout:fixed}
 table.rt thead th{background:#f0ece3;border:1px solid #cfc6b4;padding:2px 4px;font-weight:700;text-transform:uppercase;font-size:7px;letter-spacing:.2px;text-align:left}
 table.rt thead th.hw{background:#e4dccb}
+table.rt td.w.inc{background:#fff6cc;-webkit-print-color-adjust:exact;print-color-adjust:exact;border:1.5px solid #3d2e1e!important;vertical-align:bottom;padding:2px 4px}
+table.rt td.inc span{display:block;border-bottom:1px dotted #3d2e1e;font-weight:700;font-size:10px;line-height:1.1}
 table.rt th.n,table.rt td.n{text-align:right;white-space:nowrap}
 table.rt th.c,table.rt td.c{text-align:center}
 table.rt td{padding:1px 4px;border:1px solid #ddd5c6;vertical-align:middle;height:6mm;line-height:1.2}
@@ -2145,7 +2147,7 @@ table.inc tr.sep td{border-top:2px solid #3d2e1e}
     <div class="fld"><span>Furgone</span><i></i></div>
   </div>
 </div>
-${legPag?`<div class="leg-pag"><b>Pagamenti:</b> ${legPag}</div>`:''}
+${legPag?`<div class="leg-pag"><b>Pagamenti:</b> ${legPag}${Object.keys(perPag).some(k=>PAG_INCASSO.includes(k))?' · <span class="leg-inc">€</span> nella colonna "Importo incassato" = cliente che paga alla consegna: scrivere la cifra incassata':''}</div>`:''}
 ${notaAut?`<div class="nota-box"><h4>Note per gli autisti</h4><div>${esc(notaAut)}</div></div>`:''}
 ${corpo}
 <div class="rpt-footer">
@@ -2674,6 +2676,29 @@ function applicaSeac3(){
   settAperte((l,g,w)=>{if(dataDi(w,g)<OGGI)return false;let m=false;
     l.forEach(x=>{if(!x.intestazione&&!x.stampato&&pag[x.nome]&&!x.pagamento){x.pagamento=pag[x.nome];m=true}});return m});
 }
+// listini 2026 di Seac: il codice listino del cliente in Seac decide quale listino usa nell'app
+const LISTINI_2026=[{"cod": "01", "nome": "01 · Rivenditori Bergamo · minimo 30 uova", "prezzi": {"BOX4": 2.6, "BOX6": 3.9, "BOX10": 6.5, "SAC4": 3, "SAC6": 4.5, "ALV7": 6, "STOF6": 9.5, "PLAT30": 19.5}, "id": "base", "def": true}, {"cod": "02", "nome": "02 · Rivenditori Fuori Bergamo · minimo 30 uova", "prezzi": {"BOX4": 3.6, "BOX6": 5.4, "BOX10": 9, "SAC4": 4, "SAC6": 6, "ALV7": 7.75, "STOF6": 11, "PLAT30": 27}, "id": "lmw9i7br5", "def": false}, {"cod": "03", "nome": "03 · Cazzamali", "prezzi": {"BOX4": 2.8, "BOX6": 4.2, "BOX10": 7, "SAC4": 3, "SAC6": 4.5, "ALV7": 6, "STOF6": 9.5, "PLAT30": 21}, "id": "L03", "def": false}, {"cod": "04", "nome": "04 · Con Cuore", "prezzi": {"BOX4": 2.6, "BOX6": 3.9, "BOX10": 6.5, "SAC4": 3, "SAC6": 4.5, "ALV7": 6, "PLAT30": 19.5}, "id": "L04", "def": false}, {"cod": "05", "nome": "05 · Fruttivendolo Milanese", "prezzi": {"BOX4": 2.8, "BOX6": 4.2, "BOX10": 7, "PLAT30": 21}, "id": "L05", "def": false}, {"cod": "06", "nome": "06 · Privati Bergamo", "prezzi": {"BOX4": 3.2, "BOX6": 4.8, "BOX10": 8, "PLAT30": 24}, "id": "L06", "def": false}, {"cod": "07", "nome": "07 · Coco", "prezzi": {"BOX4": 2.08, "BOX6": 3.12, "SAC4": 2.7, "SAC6": 4.05}, "id": "L07", "def": false}, {"cod": "08", "nome": "08 · Rivenditori e privati Italia · minimo 60 uova", "prezzi": {"BOX4": 3.6, "BOX6": 5.4, "BOX10": 9, "SAC6": 6, "ALV7": 7.75, "STOF6": 11, "PLAT30": 27}, "id": "L08", "def": false}, {"cod": "09", "nome": "09 · Privati Bergamo · minimo 60 uova", "prezzi": {"BOX4": 2.6, "BOX6": 3.9, "BOX10": 6.5, "SAC4": 3, "SAC6": 4.5, "ALV7": 6, "STOF6": 9.5, "PLAT30": 19.5}, "id": "L09", "def": false}, {"cod": "10", "nome": "10 · Privati Fuori Bergamo · minimo 60 uova", "prezzi": {"BOX4": 3.6, "BOX6": 5.4, "BOX10": 9, "SAC6": 6, "ALV7": 7.75, "STOF6": 11, "PLAT30": 27}, "id": "L10", "def": false}, {"cod": "11", "nome": "11 · Privati cancello · minimo 4 uova", "prezzi": {"BOX4": 3.6, "BOX6": 5.4, "BOX10": 9, "SAC4": 4, "SAC6": 6, "ALV7": 7.75, "STOF6": 11, "PLAT30": 27}, "id": "L11", "def": false}, {"cod": "12", "nome": "12 · Savoia", "prezzi": {"PLAT30": 24}, "id": "L12", "def": false}, {"cod": "13", "nome": "13 · Kuccagna · minimo 60 uova", "prezzi": {"BOX4": 2.8, "BOX6": 4.2, "BOX10": 7, "SAC4": 3.2, "SAC6": 4.8, "ALV7": 6.65, "STOF6": 10.4, "PLAT30": 21}, "id": "L13", "def": false}, {"cod": "14", "nome": "14 · Fras.co", "prezzi": {"BOX4": 3.6, "BOX6": 5.4, "BOX10": 9, "SAC6": 5.4, "PLAT30": 27}, "id": "L14", "def": false}, {"cod": "15", "nome": "15 · Iper", "prezzi": {"BOX6": 4.08, "SAC4": 3.09, "ALV7": 6.18}, "id": "L15", "def": false}, {"cod": "16", "nome": "16 · Benvenuti · minimo 400 uova", "prezzi": {"BOX4": 3.02, "BOX6": 4.52, "BOX10": 7.54, "SAC4": 3.6, "SAC6": 5.4, "ALV7": 7.01, "STOF6": 9.5, "PLAT30": 22.62}, "id": "L16", "def": false}, {"cod": "17", "nome": "17 · Gulliver", "prezzi": {"BOX6": 3.9, "SAC4": 3}, "id": "L17", "def": false}, {"cod": "18", "nome": "18 · Caffè Colleoni", "prezzi": {"BOX6": 3.3, "SAC4": 3.3, "ALV7": 6}, "id": "L18", "def": false}, {"cod": "19", "nome": "19 · Minetti", "prezzi": {"BOX4": 2.6, "BOX6": 3.9, "BOX10": 6.5, "SAC4": 3, "SAC6": 4.5, "PLAT30": 17.82}, "id": "L19", "def": false}, {"cod": "99", "nome": "99 · Omaggi", "prezzi": {"BOX4": 0, "BOX6": 0, "BOX10": 0, "SAC4": 0, "SAC6": 0, "ALV7": 0, "STOF6": 0, "PLAT30": 0}, "id": "L99", "def": false}];
+function applicaListini2026(){
+  const t=getTpl();if((t._fatte||[]).includes('listini2026'))return;
+  const vecchi=getListini();
+  // i listini 2026 sostituiscono quelli presenti; restano quelli creati a mano che hanno clienti assegnati
+  const an=getAnag();const usati=new Set(Object.values(an).map(a=>a.listino).filter(Boolean));
+  const nuovi=LISTINI_2026.map(x=>({id:x.id,nome:x.nome,def:x.def,cod:x.cod,prezzi:{...x.prezzi}}));
+  vecchi.forEach(v=>{if(!nuovi.some(n=>n.id===v.id)&&usati.has(v.id))nuovi.push({...v,def:false})});
+  setListini(nuovi);
+  const perCod={};nuovi.forEach(x=>{if(x.cod)perCod[x.cod]=x.id});
+  Object.keys(an).forEach(n=>{const c=(an[n].seac||{}).lst;if(!c)return;const id=perCod[String(c).padStart(2,'0')];
+    if(id){if(id==='base')delete an[n].listino;else an[n].listino=id}});
+  setAnag(an);
+  const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('listini2026');setTpl(t2);
+}
+// clienti consegnati Fuori Bergamo senza codice listino in Seac: listino 02
+const FBG_SENZA_LISTINO=["ALESSANDRO ANGELONE", "BONA ORTOFRUTTA", "BONTA' IN TAVOLA", "GAUDIO", "IL COLMETTO", "IL GUSTO DELLA FRUTTA", "L'ALCHIMIA", "LA BOTTEGA DI ANDREA", "LA DISPENSA", "LA NUOVA RIPAMONTI", "LA PESCHIERA DA PIERO", "MAGNA PARS SRL", "NEGRINI", "PAGANI GASTRONOMIA", "PRIVATA FRANCESCA SETTESOLDI", "PRIVATO PAOLO GARIBOLDI - ENIGM SRL"];
+function applicaListini2026b(){
+  const t=getTpl();if((t._fatte||[]).includes('listini2026b'))return;
+  const an=getAnag();FBG_SENZA_LISTINO.forEach(n=>{an[n]=an[n]||{};an[n].listino='lmw9i7br5'});setAnag(an);
+  const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('listini2026b');setTpl(t2);
+}
 // i due "Healthy Food - 900020" diventano le due società registrate in Seac
 const SEAC_HF=[["HEALTHY FOOD - 900020", "HEALTHY FOOD CANONICA 59 S.R.L.", {"cod": "12620570965", "nom": "HEALTHY FOOD CANONICA 59 S.R.L.", "piva": "12620570965", "cf": "12620570965", "ind": "VIA EURIPIDE 3", "cap": "20145", "com": "MILANO", "prov": "MI", "pag": "B009", "tsog": "Soggetto IVA", "zona": "MI", "lst": "2", "tcli": "ORT"}], ["HEALTY FOOD - 900020", "HEALTHY FOOD CIMAROSA 11 S.R.L.", {"cod": "11261400961", "nom": "HEALTHY FOOD CIMAROSA 11 S.R.L.", "piva": "11261400961", "cf": "11261400961", "ind": "VIA EURIPIDE 3", "cap": "20145", "com": "MILANO", "prov": "MI", "pag": "B009", "tsog": "Soggetto IVA", "zona": "MI", "lst": "2", "tcli": "ORT"}]];
 function applicaSeac2(){
@@ -2848,6 +2873,8 @@ async function avvia(){
   applicaSeac1();
   applicaSeac2();
   applicaSeac3();
+  applicaListini2026();
+  applicaListini2026b();
   const fx=riempiFissiGiorni();
   buildAna();buildWeekNav();buildDtabs();
   render();
