@@ -2699,6 +2699,72 @@ function applicaListini2026b(){
   const an=getAnag();FBG_SENZA_LISTINO.forEach(n=>{an[n]=an[n]||{};an[n].listino='lmw9i7br5'});setAnag(an);
   const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('listini2026b');setTpl(t2);
 }
+// ── LOTTI DELLA SETTIMANA 46, dalle righe in alto di ogni giorno del file Excel ──
+// out = uova usate quel giorno da ciascun lotto; stock = uova rimaste a fine settimana (solo lotti ancora aperti)
+const XL_LOTTI46=[
+ {k:'P1-1130',nome:'P1',scadenza:'2026-11-30',data:'2026-11-09',arr:9618,out:{Lunedi:810,Martedi:3474,Mercoledi:2626}},
+ {k:'P1-1204',nome:'P1',scadenza:'2026-12-04',data:'2026-11-12',arr:5730,out:{Giovedi:2196}},
+ {k:'P1-1206',nome:'P1',scadenza:'2026-12-06',data:'2026-11-13',arr:1470,out:{Venerdi:3256}},
+ {k:'P1-1208',nome:'P1',scadenza:'2026-12-08',data:'2026-11-14',out:{Sabato:568},stock:3888},
+ {k:'P2-1130',nome:'P2',scadenza:'2026-11-30',data:'2026-11-09',arr:7212,out:{Lunedi:760,Martedi:1360,Mercoledi:2356}},
+ {k:'P2-1204',nome:'P2',scadenza:'2026-12-04',data:'2026-11-12',arr:4560,out:{Giovedi:1798}},
+ {k:'P2-1206',nome:'P2',scadenza:'2026-12-06',data:'2026-11-13',arr:1140,out:{Venerdi:2338}},
+ {k:'P2-1208',nome:'P2',scadenza:'2026-12-08',data:'2026-11-14',out:{Sabato:1200},stock:3100},
+ {k:'ALT-1201',nome:'Altobello',scadenza:'2026-12-01',data:'2026-11-09',arr:7800,out:{Martedi:3646,Mercoledi:4140}},
+ {k:'ALT-1205',nome:'Altobello',scadenza:'2026-12-05',data:'2026-11-11',arr:5880,out:{Mercoledi:5430,Giovedi:450}},
+ {k:'MOR-1201',nome:'Morini',scadenza:'2026-12-01',data:'2026-11-09',arr:4281,out:{Lunedi:3811,Martedi:416}},
+ {k:'MANA-1206',nome:'Mana',scadenza:'2026-12-06',data:'2026-11-12',arr:4320,out:{Giovedi:600,Venerdi:3712}},
+ {k:'FRA-1206',nome:'Frattesina',scadenza:'2026-12-06',data:'2026-11-12',arr:8640,out:{Giovedi:3780,Venerdi:4850}},
+ {k:'MORS-1208',nome:'Morini calibro S',scadenza:'2026-12-08',data:'2026-11-13',arr:600,out:{Venerdi:336,Sabato:264}},
+ {k:'MOR-1208',nome:'Morini',scadenza:'2026-12-08',data:'2026-11-14',arr:11880,out:{Sabato:1892},stock:9988}
+];
+function applicaLotti46(){
+  const t=getTpl();if((t._fatte||[]).includes('lotti46'))return false;
+  const W='2026-11-09';const a=LS.g('slv_ord_v1',{});if(!a[W])return false;
+  const L=getLotti();
+  // i lotti già presenti che non servono ad altre settimane vengono chiusi: restano nella pagina Lotti e si possono riaprire
+  const rifAltre=new Set();
+  Object.keys(a).forEach(w=>{if(w===W||!a[w])return;GIORNI.forEach(g=>(a[w][g]||[]).forEach(r=>{if(r&&r.lotto)rifAltre.add(r.lotto)}))});
+  L.forEach(l=>{if(!String(l.id).startsWith('x46-')&&!rifAltre.has(l.id)){l.chiuso=true;l.uso=false}});
+  XL_LOTTI46.forEach(x=>{if(L.some(l=>l.id==='x46-'+x.k))return;
+    L.push({id:'x46-'+x.k,nome:x.nome,scadenza:x.scadenza,data:x.data,uova:0,note:x.arr?'Arrivate '+fmtU(x.arr)+' uova':'',uso:false,chiuso:!x.stock})});
+  const cons={};
+  GIORNI.forEach(g=>{const l=a[W][g];if(!Array.isArray(l))return;
+    const quota={};XL_LOTTI46.forEach(x=>{if(x.out[g])quota['x46-'+x.k]=x.out[g]});
+    const ids=Object.keys(quota);
+    l.forEach(r=>{if(!r.intestazione){r.lotto='';r.lotto_man=false}});
+    if(!ids.length)return;
+    const righe=l.filter(r=>!r.intestazione&&!r.nascosto&&totUova(r)>0).sort((x,y)=>totUova(y)-totUova(x));
+    const aperto=id=>XL_LOTTI46.some(x=>'x46-'+x.k===id&&x.stock);
+    righe.forEach(r=>{const tot=totUova(r);
+      // il lotto più piccolo che contiene tutta la riga
+      const ok=ids.filter(id=>quota[id]>=tot).sort((x,y)=>quota[x]-quota[y]);
+      if(ok.length){r.lotto=ok[0];quota[ok[0]]-=tot;return}
+      // altrimenti la riga si divide sui lotti con più uova rimaste
+      const serve={...r.formati};const parti=[];
+      ids.slice().sort((x,y)=>quota[y]-quota[x]).forEach(id=>{const presi={};
+        FORMATI.forEach(f=>{if(!(serve[f]>0))return;const n=Math.min(serve[f],Math.floor(quota[id]/UPF[f]));if(n>0){presi[f]=n;serve[f]-=n;quota[id]-=n*UPF[f]}});
+        if(Object.keys(presi).length)parti.push([id,presi])});
+      const resto={};FORMATI.forEach(f=>{if(serve[f]>0)resto[f]=serve[f]});
+      if(Object.keys(resto).length){
+        // le uova in più rispetto al file vanno sul lotto aperto del giorno, altrimenti su quello con più uova
+        const id=ids.slice().sort((x,y)=>(aperto(y)-aperto(x))||(quota[y]-quota[x]))[0];
+        quota[id]-=totUova({formati:resto});const p=parti.find(x=>x[0]===id);
+        if(p)FORMATI.forEach(f=>{if(resto[f])p[1][f]=(p[1][f]||0)+resto[f]});else parti.push([id,resto]);
+      }
+      r.formati=parti[0][1];r.lotto=parti[0][0];
+      parti.slice(1).forEach(([id,q])=>l.push({nome:r.nome,prov:r.prov||'',note_conf:r.note_conf||'',note_ord:'',formati:q,lotto:id,lotto_man:false,stampato:false,fp:!!r.fp,split:true,split_auto:true,pagamento:r.pagamento||'',...(r.tipo_om?{tipo_om:r.tipo_om}:{}),...(r.zona_cons?{zona_cons:r.zona_cons}:{})}));
+    });
+    raggruppaSplit(l);segnaOmaggi(l);
+    l.forEach(r=>{if(r.lotto&&!r.intestazione)cons[r.lotto]=(cons[r.lotto]||0)+totUova(r)});
+  });
+  a[W]._ts=Date.now();LS.s('slv_ord_v1',a);
+  // uova del lotto = uova usate in settimana + rimaste a fine settimana secondo il file
+  XL_LOTTI46.forEach(x=>{const l=L.find(y=>y.id==='x46-'+x.k);if(l)l.uova=(cons[l.id]||0)+(x.stock||0)});
+  setLotti(L);
+  const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('lotti46');setTpl(t2);
+  return true;
+}
 // ── SETTIMANA 46 (9-14 novembre 2026) DAL FILE EXCEL "Weekly order" ──
 // fa fede il file: le righe del giro ripartono vuote e prendono le quantità del file;
 // i clienti consegnati fuori dal loro giro si aggiungono nella zona del giorno, le consegne doppie come righe aggiuntive
@@ -2922,10 +2988,11 @@ async function avvia(){
   applicaListini2026b();
   applicaDocumenti1();
   const xl46=applicaSett46();
+  const lt46=applicaLotti46();
   const fx=riempiFissiGiorni();
   buildAna();buildWeekNav();buildDtabs();
   render();
-  if(daBackup||fx||xl46)sync(); // porta subito al server i dati nuovi
+  if(daBackup||fx||xl46||lt46)sync(); // porta subito al server i dati nuovi
 }
 // ── INIT ──
 let _auth=null;try{_auth=ST.getItem('slv_ord_auth')}catch(e){}
