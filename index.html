@@ -197,6 +197,9 @@ table.xt thead th.th-p{min-width:38px}
 table.xt thead th.th-n{min-width:100px;text-align:left}
 table.xt thead th.th-f{min-width:44px;padding:5px 3px}
 table.xt thead th.th-tot{min-width:70px;background:#e8e0d0}
+/* tasto stampa: rosso da stampare, verde già stampato */
+.bprint.da{background:#c0392b;border-color:#c0392b;color:#fff}.bprint.da:hover{background:#a93226}
+.bprint.ok{background:#2e7d32;border-color:#2e7d32;color:#fff}.bprint.ok:hover{background:#256628}
 table.xt thead th.th-co{min-width:52px;background:#e8e0d0}
 table.xt thead th.th-imp{min-width:80px;background:#e8e0d0;text-align:right}
 table.xt thead th.th-pag{min-width:90px}
@@ -1185,7 +1188,7 @@ function render(){setTimeout(altezzaTitoli,0);mostraNotaAut();
       </select></td>
       <td>${lottoSel}</td>
       <td class="td-az">
-        <button class="btn btn-moss btn-sm bic bprint" onclick="stampa(${idx})" title="Stampa solo questo ordine" style="${!c.nascosto&&tu>0?'':'visibility:hidden'}">🖨</button>
+        <button class="btn btn-sm bic bprint ${c.stampato?'ok':'da'}" onclick="stampa(${idx})" title="${c.stampato?'Già stampato · clicca per ristampare':'Da stampare · clicca per stampare solo questo ordine'}" style="${!c.nascosto&&tu>0?'':'visibility:hidden'}">🖨</button>
         ${c.split?`<button class="btn btn-ghost btn-sm bic" onclick="dividiLotto(${idx})" title="Aggiungi un'altra riga per un altro lotto">➕ lotto</button>
         <button class="btn btn-ghost btn-sm bic bdel" onclick="eliminaCliente(${idx})" title="Togli questa riga del lotto">🗑</button>`:`<button class="btn btn-ghost btn-sm bic" onclick="spostaSu(${idx})" title="Sposta su">▲</button><button class="btn btn-ghost btn-sm bic" onclick="spostaGiu(${idx})" title="Sposta giù">▼</button>
         <button class="btn btn-ghost btn-sm bic" onclick="dividiLotto(${idx})" title="Dividi su un altro lotto: aggiunge sotto una riga dello stesso cliente">⑂</button>
@@ -1202,7 +1205,7 @@ function render(){setTimeout(altezzaTitoli,0);mostraNotaAut();
 function setColli(idx,val,el){
   const lista=initG(GG);const c=lista[idx];const v=parseInt(val)||0;
   if(v>0)c.colli=v;else delete c.colli;c.stampato=false;setG(GG,lista);rebuildRbar();
-  const tr=el&&el.closest('tr');if(tr){el.classList.toggle('vv',v>0);const bs=tr.querySelector('.badge-st');if(bs)bs.remove();tr.classList.remove('st-row')}
+  const tr=el&&el.closest('tr');if(tr){el.classList.toggle('vv',v>0);const bs=tr.querySelector('.badge-st');if(bs)bs.remove();tr.classList.remove('st-row');const bp=tr.querySelector('.bprint');if(bp){bp.classList.remove('ok');bp.classList.add('da')}}
 }
 function setQ(idx,f,val,el){
   const lista=initG(GG);const v=parseInt(val)||0;const c=lista[idx];
@@ -1218,7 +1221,7 @@ function setQ(idx,f,val,el){
     el.classList.toggle('vv',v>0);
     tr.classList.toggle('ha-ord',tu>0&&!c.nascosto);
     const vis=tu>0&&!c.nascosto?'':'hidden';
-    const bp=tr.querySelector('.bprint');if(bp)bp.style.visibility=vis;
+    const bp=tr.querySelector('.bprint');if(bp){bp.style.visibility=vis;bp.classList.remove('ok');bp.classList.add('da');bp.title='Da stampare · clicca per stampare solo questo ordine'}
     const sw=tr.querySelector('.selw');if(sw)sw.style.visibility=vis;
     if(!tu&&SEL.has(selKey(c))){SEL.delete(selKey(c));sw.querySelector('input').checked=false;aggiornaPulsantiStampa()}
     const bs=tr.querySelector('.badge-st');if(bs)bs.remove();tr.classList.remove('st-row');
@@ -2727,6 +2730,92 @@ function applicaListini2026b(){
   const an=getAnag();FBG_SENZA_LISTINO.forEach(n=>{an[n]=an[n]||{};an[n].listino='lmw9i7br5'});setAnag(an);
   const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('listini2026b');setTpl(t2);
 }
+// ── SETTIMANA 47 (16-21 novembre 2026) DAL FILE EXCEL "Weekly order" ──
+// fa fede il file: quantità, note ordine, note imballo, colli e ordini già stampati (colonna S del file)
+const XL_SETT47={"Lunedi":[{"n":"PARROCCHIA SAN LORENZO","q":{"PLAT30":2},"st":1},{"n":"OMAR SRL - ALZANO","q":{"BOX4":40},"st":1},{"n":"OL BOTIGHI' DI CASAI EWA","q":{"BOX6":6},"st":1},{"n":"PAGLIAROLI FRATELLI - ISLA BONITA","q":{"BOX6":60},"st":1},{"n":"ARETE' COOPERATIVA SOCIALE","q":{"PLAT30":7},"st":1},{"n":"ORTOFRUTTA RAVELLINI SRL","q":{"BOX4":25,"BOX6":30},"st":1},{"n":"COCO' SAS DI PASTA GIUSEPPE","q":{"SAC6":60,"BOX6":60},"nota":"349/4583540","nc":"data scad. su ogni scat","st":1},{"n":"SHOPSI' - BORGO PALAZZO","q":{"BOX4":20},"st":1},{"n":"ORTOFRUTTA BRIVIO DI BRIVIO MILENA","q":{"BOX6":15},"st":1},{"n":"FRANCESCO BENAGLIA","q":{"BOX6":30},"st":1},{"n":"AVIRVAREI CORINA - COQUETTE","q":{"PLAT30":1},"st":1},{"n":"WINTER K SRLS","q":{"PLAT30":4},"st":1},{"n":"L'ORTO DI BORFURO SRL","q":{"BOX4":5,"BOX6":15},"st":1},{"n":"LORETO CARNI SRL","q":{"BOX6":10},"st":1},{"n":"PANETTERIA BANA","q":{"BOX4":15,"BOX6":15},"st":1},{"n":"GOLOSIDEA LAB","q":{"BOX10":3},"nota":"consegna 9-11 altrimenti chiama 340/8259222","st":1},{"n":"TRE VALLI SRL","q":{"BOX4":30,"BOX6":30},"co":2,"st":1},{"n":"ARRIGONI - PONTERANICA","q":{"SAC6":72},"co":6,"st":1},{"n":"900055 FRUTTORTO DI FORCELLA ELENA","q":{"BOX6":10},"nota":"8/12,30 F Via P. Ruggero da Stabello 72/d, BG","st":1},{"n":"SILVIA NORBIS","q":{"PLAT30":6},"st":1},{"n":"LUIGIA BARBERI","q":{"BOX6":8},"st":1},{"n":"MACELLERIA SANTINI SRL","q":{"BOX4":6,"BOX6":15},"nota":"NB: CHIAMARE MANUELA PRIMA DI ENTRARE!!!","st":1},{"n":"MACELLERIA SALUMERIA VERGANI","q":{"BOX4":30},"st":1},{"n":"DELIZIE DI BACCO ENOTECA DI DANIELA","q":{"BOX6":12},"nota":"consegna a bar di fronte","st":1},{"n":"NO-STRANO SRL - MACELLERIA GANDINI","q":{"SAC6":6,"BOX4":10,"ALV7":3},"nota":"codice cassetta 6613","st":1},{"n":"TABACCHERIA BOCCA DI TERRUZZI VIRNA","q":{"SAC6":1,"BOX4":3,"BOX6":3,"ALV7":1},"st":1},{"n":"MORELLI RISTORAZIONE","q":{"PLAT30":2},"nota":"ztl, parcheggiare in via formenti. Lun chiuso ma ci sn ragazze in ufficio 340/4864439","st":1},{"n":"900006 PRIVATO PASSIONE FRUTTA - VITALE ROBERTO","q":{"BOX4":6,"BOX6":8,"BOX10":5},"st":1},{"n":"TUTTO BUONO","q":{"BOX4":10,"BOX6":10},"nota":"avvisa se arrivi dp h13 al 338/5949526","st":1},{"n":"MINETTI 1980 SRL","q":{"PLAT30":18,"SAC4":20},"nota":"11 COLLI INSERIRE NEL DDT","nc":"bigliettino","co":11,"st":1,"zona":"FUORI BERGAMO (LC-CO-MB)"},{"n":"900000 PRIVATO AL CANCELLO BG","q":{"BOX6":4},"nota":"PRESE SABATO","st":1,"fp":true,"zc":"BERGAMO"}],"Martedi":[{"n":"LIBRERIA TERZO MONDO","q":{"BOX6":6}},{"n":"AMANDLA COOPERATIVA","q":{"BOX6":47}},{"n":"IL SOLE E TERRA SOC. COOPERATIVA","q":{"BOX4":45,"BOX6":60,"BOX10":72},"nc":"scat usati","co":6,"st":1},{"n":"VENDERBE SRL","q":{"BOX4":60}},{"n":"L'ORTO DI JACK","q":{"BOX6":40},"co":3},{"n":"NICOLO BLINI PRIVATO TREVIGLIO 340/7551785","q":{"BOX10":6},"nota":"VIA PACINOTTI, 7 TREVIGLIO CAMP. BLINI FINARDI","zona":"BERGAMO (BASSA BERGAMASCA)"},{"n":"GHERIM SOCIETA' COOPERATIVA SOCIALE","q":{"BOX4":7,"BOX6":11}},{"n":"DA VITTORIO SRL - BRUSAPORTO","q":{"PLAT30":5},"nota":"lotto/tmc + data e ora di partenza"},{"n":"SIRANI SRL","q":{"PLAT30":5}},{"n":"OSCAR MAGNI - 349/5895615","q":{"PLAT30":4},"nota":"fino alle 14,30:  Pizzeria Bonumus Treviglio viale partigiano 41","zona":"BERGAMO (BASSA BERGAMASCA)"}],"Mercoledi":[{"n":"RIALTO - gigante","q":{"SAC6":328,"BOX4":513},"nota":"articoli GIG ; ddt : ordine: 08118141- lotto: 16/12/2026 - colli SACCH 41- BOX 19- TOT COLLI 60, 3ddt","st":1},{"n":"MACEL. ELIO DEI F.LLI ALGERI","q":{"BOX4":5,"BOX6":15},"zona":"BERGAMO (CENTRO)"},{"n":"ARETE' COOPERATIVA SOCIALE","q":{"PLAT30":7}},{"n":"LA FRUTTA DEL BORGO","q":{"SAC4":2,"SAC6":2,"BOX4":8,"BOX6":8}},{"n":"I MONELLI SRL","q":{"BOX4":4,"BOX6":10}},{"n":"TRATTORIA FALCONI","q":{"PLAT30":1}},{"n":"900022 PRIVATO BELOTTI LUCA SAINT LAURANCE","q":{"BOX10":4},"nota":"ORDINE MINIMO 30 UOVA"},{"n":"PRINCIPE DI SAVOIA","q":{"PLAT30":36},"nota":"ddt: colli 6/1080 uova/scatole","nc":"scat/P","co":6},{"n":"MACELLERIA MASSERONI SAS","q":{"BOX4":30}},{"n":"DEGUSTO - RISTORANTE ALTRIMENTI","q":{"PLAT30":1,"BOX6":1},"nc":"pl pla"}],"Giovedi":[{"n":"VITO DI VITA 333/8678670","q":{"PLAT30":1},"nota":"Via Bellini 66, nembro. 30 uova ok","zona":"BERGAMO (CENTRO + ISOLA BERGAMASCA)"},{"n":"PAGLIAROLI FRATELLI - ISLA BONITA","q":{"BOX6":85}},{"n":"MACELLERIA RINALDI - NICOLA E RINA","q":{"BOX6":15}},{"n":"ORTOFRUTTA BRIVIO DI BRIVIO MILENA","q":{"BOX6":20}},{"n":"WINTER K SRLS","q":{"PLAT30":4}},{"n":"DODO2000 - DAI GUSTOSI","q":{"PLAT30":2}},{"n":"3BMETEO - BERGAMO","q":{"PLAT30":2},"nota":"salire da via san martino dll pigrizia e poi borgo canale - citofona al 44c se no fuori"},{"n":"FROSIO RISTORANTE","q":{"PLAT30":2}},{"n":"GICER - CUCINE CEREDA","q":{"PLAT30":2},"nota":"SETT 45 RITIRARE ASSEGNO","nc":"pl pla"},{"n":"PELLEGRINO ANTONIO MIRKO","q":{"BOX6":35}},{"n":"MACELLERIA MAGRI BRUNO","q":{"SAC6":15,"ALV7":8},"nc":"SETT 46 SI · UOVA BIG"},{"n":"OSTERIA DELLA VILLETTA","q":{"PLAT30":2}},{"n":"VILLA FELTRINELLI","q":{"PLAT30":12},"nc":"scat/p","co":2},{"n":"LA COLLINA SALO'","q":{"BOX4":35}},{"n":"ORTOFRUTTA DA BRUNO E TURIA","q":{"PLAT30":1,"BOX4":10,"BOX6":10},"nc":"box vuoti da 6 e 4"},{"n":"IL MACELLAIO STE","q":{"BOX4":15,"BOX6":6}},{"n":"PRIVATO LUIGI CAIULO- DESENZANO 392/4809344","q":{"BOX10":6},"nota":"via henry dunant 37 a desenzano del Garda cap 25015","zona":"FUORI BERGAMO (LAGO DI GARDA)"}],"Venerdi":[{"n":"COMMERCIO & MAS CI'","q":{"PLAT30":1},"nota":"inserire lotto nel ddt"},{"n":"HOTEL LIBIA","q":{"BOX10":3}},{"n":"BELLINGHIERI SNC DI VANNI & CESIRA","q":{"PLAT30":3}},{"n":"TRISA RISTORANTE","q":{"PLAT30":6}},{"n":"DA VITTORIO SRL - BRUSAPORTO","q":{"PLAT30":5},"nota":"lotto/tmc + data e ora di partenza"},{"n":"900018 PRIVATO ORTO DI DANI","q":{"BOX4":10,"BOX6":10},"nota":"FT PAGANO CON C /SCONTRINO C"},{"n":"ARETE' COOPERATIVA SOCIALE","q":{"PLAT30":7}},{"n":"MACELLERIA SANTINI SRL","q":{"BOX4":13,"BOX6":30},"nota":"PAGAMENTO TASSATIVO ALLA CONSEGNA"},{"n":"I MONELLI SRL","q":{"BOX4":4,"BOX6":20},"nc":"scat"},{"n":"CENTRO BOTANICO","q":{"BOX6":18}},{"n":"ALESSANDRO ANGELONE","q":{"BOX10":6},"nota":"Via Cimarosa 23 Milano","nc":"scat"},{"n":"PRIVATA FRANCESCA SETTESOLDI","q":{"BOX10":6},"nota":"Via Washington 71 campanello22 chiamare 30' prima 349/1954878","nc":"scat"}],"Sabato":[{"n":"ARETE' COOPERATIVA SOCIALE","q":{"PLAT30":7}},{"n":"CAFFE' PAPAVERO","q":{"PLAT30":2,"BOX6":2},"nota":"5X6 BOX VUOTI","nc":"box vuoti da 6"},{"n":"WINTER K SRLS","q":{"PLAT30":8},"co":2},{"n":"NOVELLO SILVIA","q":{"BOX6":10}},{"n":"MG RISTORAZIONE - BRASERIA","q":{"PLAT30":3},"nc":"big"},{"n":"VENDERBE SRL","q":{"BOX4":65}},{"n":"L'ORTO DI JACK","q":{"BOX6":40},"nota":"3 CPR"},{"n":"LE SORELLE","q":{"BOX6":15}}]};
+function applicaSett47(){
+  const t=getTpl();if((t._fatte||[]).includes('xl47a'))return false;
+  const W='2026-11-16';const a=LS.g('slv_ord_v1',{});const an=getAnag();
+  a[W]=a[W]||{};a[W]._fx=a[W]._fx||{};
+  const nuova=(n,o)=>({nome:n,prov:(an[n]||{}).prov||'',note_conf:'',note_ord:o.nota||'',formati:{...o.q},lotto:'',stampato:false,fp:false,nascosto:false,pagamento:(an[n]||{}).pagamento||''});
+  // dati comuni a tutte le righe: quantità, colli, note, stampato; il lotto si riassegna dopo
+  const aggiorna=(r,o)=>{r.formati={...o.q};if(o.nota)r.note_ord=o.nota;if(o.nc)r.note_conf=o.nc;if(o.co)r.colli=o.co;else delete r.colli;r.stampato=!!o.st;r.lotto='';r.lotto_man=false};
+  GIORNI.forEach(g=>{const ops=XL_SETT47[g];if(!ops)return;
+    let l=a[W][g];
+    if(!Array.isArray(l))l=(t[g]||[]).map(c=>c.intestazione?{intestazione:true,nome:c.nome}:clienteBase(c));
+    l=l.filter(r=>r.intestazione||r.fp||!r.split);
+    l.forEach(r=>{if(!r.intestazione&&!r.fp){r.formati={};r.stampato=false;r.lotto='';r.lotto_man=false;delete r.colli}});
+    const usate=new Set();
+    ops.forEach(o=>{
+      if(o.fp||o.om){
+        let r=l.find(x=>!x.intestazione&&x.fp&&x.nome===o.n&&!!x.omaggio===!!o.om&&!usate.has(x));
+        if(!r){r=nuova(o.n,o);r.fp=true;r.pagamento='';if(o.om)r.tipo_om=o.tipo_om;
+          const z=o.om?(l.find(x=>x.intestazione&&isZonaOm(x.nome))||{}).nome:'FUORI PROGRAMMA';
+          if(z&&l.some(x=>x.intestazione&&x.nome===z))inserisciInZona(l,r,z);else l.push(r)}
+        aggiorna(r,o);if(!r.zona_cons&&o.zc)r.zona_cons=o.zc;if(o.om&&!r.tipo_om)r.tipo_om=o.tipo_om;
+        usate.add(r);return;
+      }
+      if(o.split){const r=nuova(o.n,o);r.split=true;aggiorna(r,o);r.note_ord='';l.push(r);usate.add(r);return}
+      let r=l.find(x=>!x.intestazione&&!x.fp&&!x.split&&x.nome===o.n&&!usate.has(x));
+      if(!r){r=nuova(o.n,o);inserisciInZona(l,r,o.zona||'')}
+      aggiorna(r,o);usate.add(r);
+    });
+    raggruppaSplit(l);segnaOmaggi(l);a[W][g]=l;a[W]._fx[g]=1;
+  });
+  a[W]._ts=Date.now();LS.s('slv_ord_v1',a);
+  const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('xl47a');setTpl(t2);
+  return true;
+}
+// ── LOTTI DELLA SETTIMANA 47: nuovi P1, P2 e Altobello; Morini 08/12 continua dalla settimana 46 ──
+// solo gli ordini già stampati nel file hanno un lotto; gli altri si assegnano con "Assegna lotti" quando si preparano
+const XL_LOTTI47_NUOVI=[
+ {id:'x47-P1-1209',nome:'P1',scadenza:'2026-12-09',data:'2026-11-16',uova:4246},
+ {id:'x47-P2-1209',nome:'P2',scadenza:'2026-12-09',data:'2026-11-16',uova:2877},
+ {id:'x47-ALT-1208',nome:'Altobello',scadenza:'2026-12-08',data:'2026-11-16',uova:7890}
+];
+// uova uscite da ogni lotto per gli ordini stampati, giorno per giorno, come nel file
+const XL_USCITE47={Lunedi:{'x47-P1-1209':360,'x47-P2-1209':240,'x46-MOR-1208':3868,'x47-ALT-1208':600},Martedi:{'x46-MOR-1208':1260},Mercoledi:{'x46-MOR-1208':1968}};
+function applicaLotti47(){
+  const t=getTpl();if((t._fatte||[]).includes('lotti47a'))return false;
+  const W='2026-11-16';const a=LS.g('slv_ord_v1',{});if(!a[W])return false;
+  const L=getLotti();
+  XL_LOTTI47_NUOVI.forEach(x=>{if(!L.some(l=>l.id===x.id))L.push({...x,note:'',uso:false,chiuso:false})});
+  // i P1 e P2 con scadenza 08/12 sono sostituiti dai nuovi del 09/12
+  const vecchi=['x46-P1-1208','x46-P2-1208'];
+  L.forEach(l=>{if(vecchi.includes(l.id)){l.chiuso=true;l.uso=false;l.note=(l.note?l.note+' · ':'')+'chiuso il 16/11: sostituito dal lotto con scadenza 09/12'}});
+  const m=L.find(l=>l.id==='x46-MOR-1208');if(m)m.chiuso=false;
+  GIORNI.forEach(g=>{const l=a[W][g];if(!Array.isArray(l))return;
+    const quota={...(XL_USCITE47[g]||{})};const ids=Object.keys(quota);
+    const righe=l.filter(r=>!r.intestazione&&!r.nascosto&&r.stampato&&totUova(r)>0).sort((x,y)=>totUova(y)-totUova(x));
+    righe.forEach(r=>{const tot=totUova(r);
+      const ok=ids.filter(id=>quota[id]>=tot).sort((x,y)=>quota[x]-quota[y]);
+      if(ok.length){r.lotto=ok[0];r.lotto_man=true;quota[ok[0]]-=tot;return}
+      const serve={...r.formati};const parti=[];
+      ids.slice().sort((x,y)=>quota[y]-quota[x]).forEach(id=>{const presi={};
+        FORMATI.forEach(f=>{if(!(serve[f]>0))return;const n=Math.min(serve[f],Math.floor(quota[id]/UPF[f]));if(n>0){presi[f]=n;serve[f]-=n;quota[id]-=n*UPF[f]}});
+        if(Object.keys(presi).length)parti.push([id,presi])});
+      const resto={};FORMATI.forEach(f=>{if(serve[f]>0)resto[f]=serve[f]});
+      // la parte che il file non attribuisce a nessun lotto resta su una riga senza lotto, da scegliere a mano
+      if(Object.keys(resto).length){
+        // pochi pezzi rimasti per l'arrotondamento delle confezioni vanno sul lotto con più uova del giorno
+        if(ids.length&&(!parti.length||totUova({formati:resto})<=30)){const id=ids.slice().sort((x,y)=>quota[y]-quota[x])[0];quota[id]-=totUova({formati:resto});
+          const p=parti.find(x=>x[0]===id);if(p)FORMATI.forEach(f=>{if(resto[f])p[1][f]=(p[1][f]||0)+resto[f]});else parti.push([id,resto])}
+        else parti.push(['',resto]);
+      }
+      if(!parti.length)return;
+      r.formati=parti[0][1];r.lotto=parti[0][0];r.lotto_man=!!parti[0][0];
+      parti.slice(1).forEach(([id,q])=>l.push({nome:r.nome,prov:r.prov||'',note_conf:r.note_conf||'',note_ord:'',formati:q,lotto:id,lotto_man:!!id,stampato:true,fp:!!r.fp,split:true,split_auto:true,pagamento:r.pagamento||'',...(r.tipo_om?{tipo_om:r.tipo_om}:{}),...(r.zona_cons?{zona_cons:r.zona_cons}:{})}));
+    });
+    raggruppaSplit(l);segnaOmaggi(l);
+  });
+  a[W]._ts=Date.now();LS.s('slv_ord_v1',a);
+  // i lotti chiusi tornano pari: uova entrate = uova usate
+  setLotti(L);const u=consumoLotti();
+  L.forEach(l=>{if(vecchi.includes(l.id))l.uova=u[l.id]||0});
+  setLotti(L);
+  const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('lotti47a');setTpl(t2);
+  return true;
+}
 // ── LOTTI DELLA SETTIMANA 46, dalle righe in alto di ogni giorno del file Excel ──
 // out = uova usate quel giorno da ciascun lotto; stock = uova rimaste a fine settimana (solo lotti ancora aperti)
 const XL_LOTTI46=[
@@ -3017,10 +3106,12 @@ async function avvia(){
   applicaDocumenti1();
   const xl46=applicaSett46();
   const lt46=applicaLotti46();
+  const xl47=applicaSett47();
+  const lt47=applicaLotti47();
   const fx=riempiFissiGiorni();
   buildAna();buildWeekNav();buildDtabs();
   render();
-  if(daBackup||fx||xl46||lt46)sync(); // porta subito al server i dati nuovi
+  if(daBackup||fx||xl46||lt46||xl47||lt47)sync(); // porta subito al server i dati nuovi
 }
 // ── INIT ──
 let _auth=null;try{_auth=ST.getItem('slv_ord_auth')}catch(e){}
