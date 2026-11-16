@@ -2018,7 +2018,7 @@ function renderClienti(){
         <td title="${esc(a.pagamento||'')}">${esc(pagAbbr(a.pagamento)||'—')}</td>
         <td>${esc(a.documento||'—')}</td>
         <td class="seac-c">${a.seac?`${esc(a.seac.piva||a.seac.cod||'')}<small>${esc([a.seac.com,a.seac.pag].filter(Boolean).join(' · '))}</small>`:'<span style="color:#c0392b">non abbinato</span>'}</td>
-        <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm">✏️ Modifica</button></td>
+        <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm">✏️ Modifica</button> <button class="btn btn-ghost btn-sm" title="Elimina cliente" onclick="event.stopPropagation();eliminaClienteDaElenco(this.closest('tr').dataset.n)">🗑️</button></td>
       </tr>`;}).join(''):`<tr><td colspan="8" style="text-align:center;color:var(--bark);padding:20px;cursor:default">Nessun cliente trovato</td></tr>`)+
     `</tbody>`;
 }
@@ -2136,6 +2136,8 @@ async function salvaCliente(){
   closeM('m-cliente');buildAna();renderClienti();buildDtabs();
   if(tenuti.length)avviso('"'+nome+'" è stato tolto dal giro, ma resta in questi giorni perché ha già un ordine inserito:\n'+tenuti.join('\n')+'\n\nSe l\'ordine non serve, eliminalo dalla pagina Ordini.');
 }
+// elimina dal tasto cestino dell'elenco clienti: stessa procedura della scheda cliente
+function eliminaClienteDaElenco(nome){CL_ORIG=nome;return eliminaClienteAnag()}
 async function eliminaClienteAnag(){
   const nome=CL_ORIG;if(!nome)return;
   if(!await chiedi('Eliminare definitivamente "'+nome+'" da tutti i giorni e dall\'anagrafica?\n\nLo storico delle settimane passate resta invariato.'))return;
