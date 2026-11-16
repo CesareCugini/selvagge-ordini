@@ -198,6 +198,12 @@ table.xt thead th.th-n{min-width:100px;text-align:left}
 table.xt thead th.th-ct{min-width:200px;text-align:left}
 /* contatto: modo fisso del cliente + esito del giorno */
 table.xt td.td-ct{padding:3px 4px;white-space:nowrap}
+/* tre linee per trascinare il cliente */
+.drag-h{display:inline-block;width:16px;margin-right:4px;color:#b9ad9a;font-size:16px;line-height:1;cursor:grab;touch-action:none;user-select:none;vertical-align:middle;text-align:center}
+.drag-h:hover{color:var(--bark,#3b2a1a)}
+body.trascina,body.trascina *{cursor:grabbing!important;user-select:none!important}
+tr.dragging td{opacity:.45;background:#f3ead9!important}
+tr.drop-line td{padding:0!important;height:0;border-top:3px solid #c9a227!important}
 .ct-f,.ct-e{width:96px;font-size:11px;padding:3px 5px;border:1px solid transparent;border-radius:5px;background:transparent;font-family:inherit;color:var(--bark)}
 .ct-f{color:#7a6a55;font-style:italic;cursor:pointer;-webkit-appearance:none;appearance:none}
 .ct-f:hover,.ct-e:hover,.ct-f:focus,.ct-e:focus{border-color:#d9cfbf;background:#fff;outline:none}
@@ -1164,8 +1170,8 @@ function render(){setTimeout(altezzaTitoli,0);mostraNotaAut();
   const statoL=statoLotti();
   tbody.innerHTML=filt.map(c=>{
     if(c.intestazione)return isZonaOm(c.nome)
-      ?`<tr class="intestazione-row codici-row"><td colspan="${NCOL}">${CODICI_FONDO.map(k=>`<span>${k}</span>`).join('')}<span class="om-lbl">non pagano</span></td></tr>`
-      :`<tr class="intestazione-row"><td colspan="${NCOL}">${esc(c.nome)}${MODIFICA_ZONE&&!ZONE_FISSE.includes(c.nome)?`<button class="zn-ed" onclick="openZona(${lista.indexOf(c)})" title="Cambia il nome di questa zona">✏️ rinomina</button>`:''}</td></tr>`;
+      ?`<tr class="intestazione-row codici-row" data-idx="${lista.indexOf(c)}"><td colspan="${NCOL}">${CODICI_FONDO.map(k=>`<span>${k}</span>`).join('')}<span class="om-lbl">non pagano</span></td></tr>`
+      :`<tr class="intestazione-row" data-idx="${lista.indexOf(c)}"><td colspan="${NCOL}">${esc(c.nome)}${MODIFICA_ZONE&&!ZONE_FISSE.includes(c.nome)?`<button class="zn-ed" onclick="openZona(${lista.indexOf(c)})" title="Cambia il nome di questa zona">✏️ rinomina</button>`:''}</td></tr>`;
     const idx=lista.indexOf(c);
     const tu=totUova(c),tp=totPlat(c),ti=totImporto(c);
     const chiusa=chiusureGG.find(p=>p.cliente===c.nome);
@@ -1195,8 +1201,8 @@ function render(){setTimeout(altezzaTitoli,0);mostraNotaAut();
     const fxr=fissiGG[c.nome];
     const pinHtml=`&nbsp;<span class="pin${fxr?' on':''}" onclick="openFisso(${idx})" title="${fxr?(haFisso(fxr)?'Ordine fisso del '+GG.toLowerCase()+': '+fmtFisso(fxr.fisso)+(fxr.fisso_nota?' · ':''):'Nota fissa del '+GG.toLowerCase()+': ')+esc(fxr.fisso_nota||''):'Imposta un ordine fisso per ogni '+GG.toLowerCase()}">📌</span>`;
 
-    return`<tr class="${cls}">
-      <td class="td-cl"><label class="selw" style="${tu>0&&!c.nascosto?'':'visibility:hidden'}" title="Seleziona per stampare"><input type="checkbox" class="selc" ${SEL.has(selKey(c))?'checked':''} onchange="toggleSel(this.dataset.n,this.checked)" data-n="${esc(selKey(c))}"></label>${c.split?`<span class="split-nm cl-nm" title="${esc(c.nome)}">↳ ${esc(c.nome)}</span><span class="badge badge-split">altro lotto</span>`:`<span class="cl-nm" title="${esc(c.nome)}">${esc(c.nome)}</span>`}${c.split?'':badges}${c.split||c.fp?'':pinHtml}${ncHtml}</td>
+    return`<tr class="${cls}" data-idx="${idx}">
+      <td class="td-cl"><label class="selw" style="${tu>0&&!c.nascosto?'':'visibility:hidden'}" title="Seleziona per stampare"><input type="checkbox" class="selc" ${SEL.has(selKey(c))?'checked':''} onchange="toggleSel(this.dataset.n,this.checked)" data-n="${esc(selKey(c))}"></label>${c.split?'':`<span class="drag-h" onpointerdown="iniziaTrascina(event,${idx})" title="Tieni premuto e trascina per spostare il cliente">≡</span>`}${c.split?`<span class="split-nm cl-nm" title="${esc(c.nome)}">↳ ${esc(c.nome)}</span><span class="badge badge-split">altro lotto</span>`:`<span class="cl-nm" title="${esc(c.nome)}">${esc(c.nome)}</span>`}${c.split?'':badges}${c.split||c.fp?'':pinHtml}${ncHtml}</td>
       <td class="td-ct">${c.split?'':`<select class="ct-f" onchange="cambiaContatto(this)" onmouseenter="tipNota(this)" onmouseleave="tipNotaOff()" onfocus="tipNotaOff()" data-n="${esc(c.nome)}">${opzContatto(contattoFisso(c.nome))}</select><input class="ct-e ${classeEsito(c.esito)}" list="dl-es" value="${esc(c.esito||'')}" placeholder="esito" title="Esito di questo giorno: ordine, niente, no risp…" onchange="setEsito(${idx},this.value,this)">`}</td>
       <td class="td-n"><input class="nin${noteVal?' vv':''}" type="text" value="${noteVal.replace(/"/g,'&quot;')}" placeholder="—" onchange="setNote(${idx},this.value);tipNotaOff()" onmouseenter="tipNota(this)" onmouseleave="tipNotaOff()" oninput="tipNotaOff()">${zonaDiRiga(lista,idx)==='GDO'&&!c.split?`<div class="gdo-box${gdoCompleto(c)?'':' manca'}" onclick="openGdo(${idx})" title="N. ordine, colli e bancali">${gdoRiassunto(c)||'📦 inserisci dati GDO'}</div>`:''}</td>
       <td class="qty-cell"><input class="qin${c.colli?' vv':''}" type="number" min="0" value="${c.colli||''}" title="Colli" onchange="setColli(${idx},this.value,this)" onfocus="this.select()"></td>
@@ -1443,6 +1449,55 @@ function rmFP(idx){const lista=initG(GG);lista.splice(idx,1);setG(GG,lista);rend
 // ── GESTIONE GIRO: sposta, elimina, aggiungi ──────────
 // riga "raggiungibile" = intestazione o cliente visibile con i filtri attuali
 function rigaVisibile(c){return c.intestazione||(!c.nascosto||mostraNascosti)}
+// ── SPOSTAMENTO CLIENTI TRASCINANDO LE TRE LINEE (come le tappe su Google Maps) ──
+let DRAG=null;
+function iniziaTrascina(e,idx){
+  e.preventDefault();
+  const tr=e.target.closest('tr');const tb=document.getElementById('tbody');
+  const lista=initG(GG);const c=lista[idx];
+  // il cliente si sposta insieme alle sue righe "altro lotto"
+  const blocco=[tr];let n=tr.nextElementSibling;
+  while(n&&n.classList.contains('split-row')){blocco.push(n);n=n.nextElementSibling}
+  blocco.forEach(r=>r.classList.add('dragging'));
+  const linea=document.createElement('tr');linea.className='drop-line';linea.innerHTML='<td colspan="20"></td>';
+  DRAG={idx,nome:c.nome,blocco,linea,tb,dest:null};
+  document.body.classList.add('trascina');
+  window.addEventListener('pointermove',muoviTrascina);
+  window.addEventListener('pointerup',fineTrascina,{once:true});
+  window.addEventListener('pointercancel',annullaTrascina,{once:true});
+}
+function muoviTrascina(e){
+  if(!DRAG)return;
+  // scorre la pagina se si arriva vicino al bordo
+  const m=60;if(e.clientY<m)window.scrollBy(0,-12);else if(e.clientY>window.innerHeight-m)window.scrollBy(0,12);
+  const el=document.elementFromPoint(e.clientX,e.clientY);const tr=el&&el.closest('#tbody tr');
+  if(!tr||tr===DRAG.linea||DRAG.blocco.includes(tr)||tr.classList.contains('split-row'))return;
+  const r=tr.getBoundingClientRect();const sopra=e.clientY<r.top+r.height/2;
+  let rif;
+  if(sopra&&!tr.classList.contains('intestazione-row'))rif=tr;
+  else{rif=tr.nextElementSibling;while(rif&&(rif.classList.contains('split-row')||rif===DRAG.linea||DRAG.blocco.includes(rif)))rif=rif.nextElementSibling}
+  if(rif)DRAG.tb.insertBefore(DRAG.linea,rif);else DRAG.tb.appendChild(DRAG.linea);
+  const dopo=DRAG.linea.nextElementSibling;
+  DRAG.dest=dopo&&dopo.dataset.idx!==undefined?Number(dopo.dataset.idx):null;
+}
+function chiudiTrascina(){
+  window.removeEventListener('pointermove',muoviTrascina);window.removeEventListener('pointercancel',annullaTrascina);
+  document.body.classList.remove('trascina');
+  if(DRAG){DRAG.blocco.forEach(r=>r.classList.remove('dragging'));DRAG.linea.remove()}
+}
+function annullaTrascina(){chiudiTrascina();DRAG=null}
+function fineTrascina(){
+  if(!DRAG)return;const d=DRAG;const messa=!!d.linea.parentNode;chiudiTrascina();DRAG=null;
+  if(!messa)return;
+  const lista=initG(GG);const i=d.idx;if(!lista[i]||lista[i].nome!==d.nome)return;
+  let fine=i+1;while(fine<lista.length&&lista[fine].split&&lista[fine].nome===d.nome)fine++;
+  const dest=d.dest;if(dest!==null&&dest>=i&&dest<=fine)return;
+  const destObj=dest===null?null:lista[dest];
+  const blocco=lista.splice(i,fine-i);
+  const pos=destObj?lista.indexOf(destObj):lista.length;
+  lista.splice(pos,0,...blocco);
+  segnaOmaggi(lista);setG(GG,lista);if(!blocco[0].fp)syncTpl(GG,lista);render();
+}
 function spostaSu(idx){
   const lista=initG(GG);let j=idx-1;
   while(j>=0&&(!rigaVisibile(lista[j])||lista[j].split))j--;
