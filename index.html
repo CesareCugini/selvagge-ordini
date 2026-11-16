@@ -1216,7 +1216,7 @@ function render(){setTimeout(altezzaTitoli,0);mostraNotaAut();
       <td class="td-az">
         <button class="btn btn-sm bic bprint ${c.stampato?'ok':'da'}" onclick="stampa(${idx})" title="${c.stampato?'Già stampato · clicca per ristampare':'Da stampare · clicca per stampare solo questo ordine'}" style="${!c.nascosto&&tu>0?'':'visibility:hidden'}">🖨</button>
         ${c.split?`<button class="btn btn-ghost btn-sm bic" onclick="dividiLotto(${idx})" title="Aggiungi un'altra riga per un altro lotto">➕ lotto</button>
-        <button class="btn btn-ghost btn-sm bic bdel" onclick="eliminaCliente(${idx})" title="Togli questa riga del lotto">🗑</button>`:`<button class="btn btn-ghost btn-sm bic" onclick="spostaSu(${idx})" title="Sposta su">▲</button><button class="btn btn-ghost btn-sm bic" onclick="spostaGiu(${idx})" title="Sposta giù">▼</button>
+        <button class="btn btn-ghost btn-sm bic bdel" onclick="eliminaCliente(${idx})" title="Togli questa riga del lotto">🗑</button>`:`
         <button class="btn btn-ghost btn-sm bic" onclick="dividiLotto(${idx})" title="Dividi su un altro lotto: aggiunge sotto una riga dello stesso cliente">⑂</button>
         <button class="btn btn-ghost btn-sm bic" onclick="openSposta(${idx})" title="Sposta in un altro giorno">⇄</button>
         <button class="btn btn-ghost btn-sm bic" onclick="openProm('${c.nome.replace(/\\/g,'').replace(/'/g,"\\'")}')" title="Aggiungi promemoria">🔔</button>
