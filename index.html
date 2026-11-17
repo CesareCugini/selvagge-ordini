@@ -2338,7 +2338,7 @@ function stampaReport(){
       zTot.u+=tu;zTot.imp+=ti;totGen.u+=tu;totGen.imp+=ti;
       const pg=c.pagamento||'';perPag[pg]=(perPag[pg]||0)+ti;
       const doc=(anR[c.nome]||{}).documento||'';
-      const dettaglio=FORMATI.filter(f=>fmtSomma[f]>0).map(f=>`${f}×${fmtSomma[f]}`).join(' ');
+      const dettaglio=FORMATI.filter(f=>fmtSomma[f]>0).map(f=>`${f}×${fmtSomma[f]}`).join('<br>');
       // note ordine del giorno + dalla scheda cliente: nota di confezionamento e indirizzo e note di consegna
       const sc=getAnag()[c.nome]||{};const nconf=c.note_conf||sc.note_conf||'';const cons=sc.consegna||'';
       const isGdo=clienteGdo(c.nome,/GDO/.test(z.nome||'')?'GDO':'',c);const note=[isGdo?unici(x=>x.note_ci).map(esc).join(' · '):'',unici(x=>x.note_ord).map(esc).join(' · '),gdoRiassunto(c)?'<b style="font-style:normal;color:#333">'+gdoRiassunto(c)+'</b>':'',nconf?'<i>⚠ '+esc(nconf)+'</i>':'',cons?'<span style="font-style:normal">Consegna: '+esc(cons)+'</span>':''].filter(Boolean).join('<br>');
