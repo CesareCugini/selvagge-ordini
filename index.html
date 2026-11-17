@@ -493,7 +493,8 @@ tr.intestazione-row:first-child td{border-top:0}
       <thead><tr>
         <th class="th-l">Cliente</th>
         <th class="th-ct" title="A sinistra come si contatta il cliente, vale tutte le settimane · a destra l'esito di questo giorno">Contatto</th>
-        <th class="th-n">Note ordine</th>
+        <th class="th-n" title="Note per il centro di imballaggio: escono sul biglietto stampato">Note CI</th>
+        <th class="th-n" title="Note per gli autisti: escono nel report insieme all'indirizzo e note di consegna del cliente">Note autisti</th>
         <th class="th-co" title="Numero di colli, cioè di scatole di cartone: viene stampato sul biglietto">Colli</th>
         <th class="th-f">PLAT30</th>
         <th class="th-f">SAC4</th>
@@ -768,7 +769,6 @@ tr.intestazione-row:first-child td{border-top:0}
     <div class="cl-grid">
       <div class="frow" style="grid-column:1/3"><label>Nome cliente</label><input type="text" id="cl-nome" autocomplete="off"></div>
       <div class="frow"><label>Provincia</label><input type="text" id="cl-prov" maxlength="3"></div>
-      <div class="frow" style="grid-column:1/3"><label>Nota confezionamento (compare sul biglietto)</label><input type="text" id="cl-nc"></div>
       <div class="frow"><label>Pagamento abituale</label><select id="cl-pag"></select></div>
       <div class="frow" style="grid-column:1/3"><label>Contatto (come si contatta il cliente)</label><input type="text" id="cl-ct" list="dl-ct" autocomplete="off" placeholder="Es. mandare msg, scrive lui"></div>
       <div class="frow" style="grid-column:1/3"><label>Indirizzo e note di consegna</label><textarea id="cl-cons" rows="2" placeholder="Indirizzo, orari, telefono, giorno di consegna"></textarea></div>
@@ -900,7 +900,7 @@ function getG(g){return(LS.g('slv_ord_v1',{})[SETT]||{})[g]||null}
 const TIPI_OM={UOVCAM00L:'Campionatura, taglia L',UOVCAM00S:'Campionatura, taglia S',UOVDEC00L:'Uova declassate',UOVROT00L:'Uova rotte',UOVCAM:'Campionatura, taglia da indicare'};
 const TIPO_OM_LUNGO={UOVDEC:'UOVDEC00L',UOVROT:'UOVROT00L'};
 // codice della merce che non si paga: scelto all'inserimento, oppure dedotto dalla nota per le righe più vecchie
-function tipoOm(c){if(c.tipo_om)return TIPO_OM_LUNGO[c.tipo_om]||c.tipo_om;const t=(c.nome||'')+' '+(c.note_ord||'');
+function tipoOm(c){if(c.tipo_om)return TIPO_OM_LUNGO[c.tipo_om]||c.tipo_om;const t=(c.nome||'')+' '+(c.note_ord||'')+' '+(c.note_ci||'');
   return /rott/i.test(t)?'UOVROT00L':/declass/i.test(t)?'UOVDEC00L':/campion/i.test(t)?'UOVCAM':''}
 function etOm(c){return tipoOm(c)||'non paga'}
 // ── ZONA DI CONSEGNA dei fuori programma e delle righe che non pagano ──
@@ -969,13 +969,13 @@ function riempiFissiAperte(perGiorno){
     const m=perGiorno[g];if(!m||dataDi(w,g)<OGGI)return false;let mod=false;
     l.forEach(r=>{const f=m[r.nome];
       if(!f||r.intestazione||r.split||r.nascosto||r.fp||totUova(r)>0||chiusuraDi(r.nome,dataDi(w,g)))return;
-      r.formati={...f.q};if(f.nota&&!r.note_ord)r.note_ord=f.nota;r.stampato=false;mod=true});
+      r.formati={...f.q};if(f.nota&&!r.note_ci)r.note_ci=f.nota;r.stampato=false;mod=true});
     return mod});
 }
 function clienteBase(c){
   const a=getAnag()[c.nome]||{};
   // una settimana nuova parte dall'ordine fisso del cliente per quel giorno, se c'è
-  return{nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',note_ord:c.fisso_nota||'',formati:haFisso(c)?{...c.fisso}:{},lotto:'',stampato:false,fp:false,nascosto:false,pagamento:c.pagamento||a.pagamento||''};
+  return{nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',note_ci:c.fisso_nota||'',formati:haFisso(c)?{...c.fisso}:{},lotto:'',stampato:false,fp:false,nascosto:false,pagamento:c.pagamento||a.pagamento||''};
 }
 function migraG(g,lista){
   const baseList=getTpl()[g]||[];
@@ -1017,7 +1017,7 @@ function riempiFissiGiorni(){
       const m={};(t[g]||[]).forEach(x=>{if(!x.intestazione&&haFisso(x)&&!(x.nome in m))m[x.nome]=x});
       l.forEach(r=>{const f=m[r.nome];
         if(!f||r.intestazione||r.split||r.nascosto||r.fp||r.stampato||totUova(r)>0||chiusuraDi(r.nome,d))return;
-        r.formati={...f.fisso};if(f.fisso_nota&&!r.note_ord)r.note_ord=f.fisso_nota});
+        r.formati={...f.fisso};if(f.fisso_nota&&!r.note_ci)r.note_ci=f.fisso_nota});
       fx[g]=1;mod=true});
     if(mod){a[w]._fx=fx;a[w]._ts=Date.now();tot=true}});
   if(tot)LS.s('slv_ord_v1',a);return tot;
@@ -1164,7 +1164,7 @@ function render(){setTimeout(altezzaTitoli,0);mostraNotaAut();
   const tbody=document.getElementById('tbody');
   if(!filt.length){tbody.innerHTML='';return}
 
-  const NCOL=17; // numero totale colonne
+  const NCOL=18; // numero totale colonne
   const promAperti=promDi(SETT,GG).filter(p=>!p.fatto&&!p.chiuso);
   const fissiGG={};(getTpl()[GG]||[]).forEach(x=>{if(haFissoONota(x))fissiGG[x.nome]=x});
   const chiusureGG=promDi(SETT,GG).filter(p=>p.chiuso);
@@ -1205,7 +1205,8 @@ function render(){setTimeout(altezzaTitoli,0);mostraNotaAut();
     return`<tr class="${cls}" data-idx="${idx}">
       <td class="td-cl"><label class="selw" style="${tu>0&&!c.nascosto?'':'visibility:hidden'}" title="Seleziona per stampare"><input type="checkbox" class="selc" ${SEL.has(selKey(c))?'checked':''} onchange="toggleSel(this.dataset.n,this.checked)" data-n="${esc(selKey(c))}"></label>${c.split?'':`<span class="drag-h" onpointerdown="iniziaTrascina(event,${idx})" title="Tieni premuto e trascina per spostare il cliente">≡</span>`}${c.split?`<span class="split-nm cl-nm" title="${esc(c.nome)}">↳ ${esc(c.nome)}</span><span class="badge badge-split">altro lotto</span>`:`<span class="cl-nm" title="${esc(c.nome)}">${esc(c.nome)}</span>`}${c.split?'':badges}${c.split||c.fp?'':pinHtml}${ncHtml}</td>
       <td class="td-ct">${c.split?'':`<select class="ct-f" onchange="cambiaContatto(this)" onmouseenter="tipNota(this)" onmouseleave="tipNotaOff()" onfocus="tipNotaOff()" data-n="${esc(c.nome)}">${opzContatto(contattoFisso(c.nome))}</select><input class="ct-e ${classeEsito(c.esito)}" list="dl-es" value="${esc(c.esito||'')}" placeholder="esito" title="Esito di questo giorno: ordine, niente, no risp…" onchange="setEsito(${idx},this.value,this)">`}</td>
-      <td class="td-n"><input class="nin${noteVal?' vv':''}" type="text" value="${noteVal.replace(/"/g,'&quot;')}" placeholder="—" onchange="setNote(${idx},this.value);tipNotaOff()" onmouseenter="tipNota(this)" onmouseleave="tipNotaOff()" oninput="tipNotaOff()">${zonaDiRiga(lista,idx)==='GDO'&&!c.split?`<div class="gdo-box${gdoCompleto(c)?'':' manca'}" onclick="openGdo(${idx})" title="N. ordine, colli e bancali">${gdoRiassunto(c)||'📦 inserisci dati GDO'}</div>`:''}</td>
+      <td class="td-n"><input class="nin${c.note_ci?' vv':''}" type="text" value="${esc(c.note_ci||'')}" placeholder="—" title="Nota per il centro di imballaggio: esce sul biglietto" onchange="setNoteCi(${idx},this.value);tipNotaOff()" onmouseenter="tipNota(this)" onmouseleave="tipNotaOff()" oninput="tipNotaOff()"></td>
+      <td class="td-n"><input class="nin${noteVal?' vv':''}" type="text" value="${noteVal.replace(/"/g,'&quot;')}" placeholder="—" title="Nota per gli autisti: esce nel report" onchange="setNote(${idx},this.value);tipNotaOff()" onmouseenter="tipNota(this)" onmouseleave="tipNotaOff()" oninput="tipNotaOff()">${zonaDiRiga(lista,idx)==='GDO'&&!c.split?`<div class="gdo-box${gdoCompleto(c)?'':' manca'}" onclick="openGdo(${idx})" title="N. ordine, colli e bancali">${gdoRiassunto(c)||'📦 inserisci dati GDO'}</div>`:''}</td>
       <td class="qty-cell"><input class="qin${c.colli?' vv':''}" type="number" min="0" value="${c.colli||''}" title="Colli" onchange="setColli(${idx},this.value,this)" onfocus="this.select()"></td>
       ${qcells}
       <td class="td-tot${tu===0?' zero':' pos'}">${tu>0?fmtUova(tu):'—'}</td>
@@ -1410,6 +1411,15 @@ function applicaIndirizzi1(){
   const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('indirizzi1');setTpl(t2);
   return true;
 }
+// le note scritte finora nella vecchia colonna "Note ordine" passano tutte nella colonna Note CI
+function noteInCi1(){
+  const t=getTpl();if((t._fatte||[]).includes('noteci1'))return false;
+  const o=LS.g('slv_ord_v1',{});
+  Object.keys(o).forEach(w=>{let m=false;GIORNI.forEach(g=>(o[w][g]||[]).forEach(r=>{if(!r.intestazione&&(r.note_ord||'').trim()){r.note_ci=[r.note_ci,r.note_ord.trim()].filter(Boolean).join(' · ');r.note_ord='';m=true}}));if(m)o[w]._ts=Date.now()});
+  LS.s('slv_ord_v1',o);
+  const t2=getTpl();t2._fatte=(t2._fatte||[]).concat('noteci1');setTpl(t2);
+  return true;
+}
 function applicaContatti1(){
   const t=getTpl();if((t._fatte||[]).includes('contatti1'))return false;
   const an=getAnag();Object.entries(CONTATTI_XL).forEach(([n,v])=>{an[n]=an[n]||{};if(!an[n].contatto)an[n].contatto=v});setAnag(an);
@@ -1420,6 +1430,8 @@ function applicaContatti1(){
   return true;
 }
 function setNote(idx,val){const lista=initG(GG);lista[idx].note_ord=val.trim();setG(GG,lista)}
+// nota per il centro di imballaggio: cambia il biglietto, quindi l'ordine torna da stampare
+function setNoteCi(idx,val){const lista=initG(GG);const c=lista[idx];const v=val.trim();if(v)c.note_ci=v;else delete c.note_ci;c.stampato=false;setG(GG,lista);render()}
 // un lotto scelto dal menu è "a mano": l'assegnazione automatica non lo cambia; scegliendo "—" la riga torna automatica
 // uova ancora libere in un lotto, senza contare quelle della riga indicata
 function liberoLotto(id,riga){const l=statoLotti().find(x=>x.id===id);if(!l)return 0;return l.rem+(riga&&riga.lotto===id?totUova(riga):0)}
@@ -1650,7 +1662,7 @@ function rebuildRbar(){
   aggiornaPulsantiStampa(lista);
   // riga totali confezioni sotto l'intestazione della tabella
   const tr=document.getElementById('tot-row');
-  if(tr)tr.innerHTML=`<td class="tr-l">Totale confezioni</td><td></td><td></td><td class="tr-q">${visibili.reduce((s,c)=>s+(c.colli||0),0)||'—'}</td>${FORMATI.map(f=>`<td class="tr-q${conf[f]?'':' z'}">${conf[f]||'—'}</td>`).join('')}
+  if(tr)tr.innerHTML=`<td class="tr-l">Totale confezioni</td><td></td><td></td><td></td><td class="tr-q">${visibili.reduce((s,c)=>s+(c.colli||0),0)||'—'}</td>${FORMATI.map(f=>`<td class="tr-q${conf[f]?'':' z'}">${conf[f]||'—'}</td>`).join('')}
     <td class="tr-q">${fmtUova(visibili.reduce((s,c)=>s+totUova(c),0))}</td><td class="tr-q" style="text-align:right;padding-right:10px">${fmtEur(visibili.reduce((s,c)=>s+totImporto(c),0))}</td><td colspan="3"></td>`;
 }
 function totConfezioni(lista){const r={};lista.forEach(c=>Object.entries(c.formati||{}).forEach(([f,q])=>{r[f]=(r[f]||0)+q}));return r}
@@ -1778,7 +1790,7 @@ function openFisso(idx){
   document.getElementById('fx-nome').textContent=c.nome;
   document.getElementById('fx-giorno').textContent=GG.toLowerCase();
   document.getElementById('fx-grid').innerHTML=FORMATI.map(f=>`<div class="pz"><label>${f}</label><div><input type="number" min="0" step="1" id="fx-q-${f}" value="${q[f]||''}" placeholder="—"></div></div>`).join('');
-  document.getElementById('fx-nota').value=fx?(fx.fisso_nota||''):(c.note_ord||'');
+  document.getElementById('fx-nota').value=fx?(fx.fisso_nota||''):(c.note_ci||'');
   document.getElementById('fx-rip-sempre').checked=true;
   document.getElementById('fx-quando').textContent='('+GG.toLowerCase()+' '+fmtD(dataDi(SETT,GG))+')';
   document.getElementById('fx-togli').style.visibility=fx?'':'hidden';
@@ -1792,7 +1804,7 @@ function salvaFisso(){
   if(!haQ&&!(sempre&&testo)){
     if(!fissoDi(GG,FX_NOME)&&!testo){avviso('Scrivi almeno una quantità o una nota.');return}
     if(!fissoDi(GG,FX_NOME)&&!sempre){ // solo una nota per questa settimana: non serve un ordine fisso
-      const l=initG(GG);const rr=l.find(x=>!x.intestazione&&!x.split&&x.nome===FX_NOME);if(rr){rr.note_ord=testo;setG(GG,l)}
+      const l=initG(GG);const rr=l.find(x=>!x.intestazione&&!x.split&&x.nome===FX_NOME);if(rr){rr.note_ci=testo;setG(GG,l)}
       closeM('m-fisso');render();return}
   }
   const prima=fissoDi(GG,FX_NOME);const notaPrima=prima?(prima.fisso_nota||''):'';
@@ -1802,14 +1814,14 @@ function salvaFisso(){
   const lista=initG(GG);const r=lista.find(x=>!x.intestazione&&!x.split&&x.nome===FX_NOME);
   if(r){if(haQ&&totUova(r)===0&&dataDi(SETT,GG)>=OGGI){r.formati={...q};r.stampato=false}
     // la nota della riga segue quella della finestra, anche quando viene cancellata
-    if((r.note_ord||'')===notaPrima||!r.note_ord)r.note_ord=testo;setG(GG,lista)}
+    if((r.note_ci||'')===notaPrima||!r.note_ci)r.note_ci=testo;setG(GG,lista)}
   // le altre settimane aperte, da oggi in avanti: quantità nelle righe vuote, nota aggiornata dove c'era quella vecchia
   settAperte((l,g,w)=>{
     if(g!==GG||w===SETT||dataDi(w,g)<OGGI)return false;let mod=false;
     l.forEach(x=>{if(x.intestazione||x.split||x.fp||x.nome!==FX_NOME)return;
       if(haQ&&totUova(x)===0&&!x.nascosto&&!chiusuraDi(x.nome,dataDi(w,g))){x.formati={...q};x.stampato=false;mod=true}
-      if((x.note_ord||'')===notaPrima&&notaPrima!==nota){x.note_ord=nota;mod=true}
-      else if(!x.note_ord&&nota){x.note_ord=nota;mod=true}});
+      if((x.note_ci||'')===notaPrima&&notaPrima!==nota){x.note_ci=nota;mod=true}
+      else if(!x.note_ci&&nota){x.note_ci=nota;mod=true}});
     return mod});
   closeM('m-fisso');buildDtabs();render();
 }
@@ -1818,7 +1830,7 @@ async function togliFisso(){
   const prima=fissoDi(GG,FX_NOME);const nota=prima?(prima.fisso_nota||''):'';
   setFisso(GG,FX_NOME,null);
   if(nota)settAperte((l,g,w)=>{if(g!==GG||dataDi(w,g)<OGGI)return false;let m=false;
-    l.forEach(x=>{if(!x.intestazione&&x.nome===FX_NOME&&x.note_ord===nota){x.note_ord='';m=true}});return m});closeM('m-fisso');render();
+    l.forEach(x=>{if(!x.intestazione&&x.nome===FX_NOME&&x.note_ci===nota){x.note_ci='';m=true}});return m});closeM('m-fisso');render();
 }
 
 // ── ASSEGNAZIONE AUTOMATICA DEI LOTTI ─────────────────
@@ -1927,7 +1939,7 @@ function riallineaChiusure(nomi){
       const f=(t[g]||[]).find(x=>!x.intestazione&&x.nome===r.nome);if(!haFisso(f))return;
       const uguale=JSON.stringify(r.formati||{})===JSON.stringify(f.fisso);
       if(chiusuraDi(r.nome,d)){if(uguale){r.formati={};mod=true}}
-      else if(totUova(r)===0){r.formati={...f.fisso};if(f.fisso_nota&&!r.note_ord)r.note_ord=f.fisso_nota;mod=true}});
+      else if(totUova(r)===0){r.formati={...f.fisso};if(f.fisso_nota&&!r.note_ci)r.note_ci=f.fisso_nota;mod=true}});
     return mod});
 }
 function salvaProm(){
@@ -2000,12 +2012,12 @@ function renderWeekly(){
     const giorni=GIORNI.map(g=>{
       const d=dataDi(w,g);if(d<OGGI)return'';
       const lista=((all[w]||{})[g])||[];
-      const conf=lista.filter(c=>!c.intestazione&&!c.nascosto&&(totUova(c)>0||(c.note_ord||'').trim()));
+      const conf=lista.filter(c=>!c.intestazione&&!c.nascosto&&(totUova(c)>0||(c.note_ord||'').trim()||(c.note_ci||'').trim()));
       const pr=prom.filter(p=>!p.chiuso&&inPeriodo(p,d)&&(!p.fine||!p.cliente||clienteNelGiorno(p.cliente,w,g)));
       if(!conf.length&&!pr.length)return'';
       return`<div class="wd"><div class="wd-h" onclick="apriGiorno('${w}','${g}')">${g} ${fmtD(d)}${d===OGGI?' · oggi':''} →</div>
         ${pr.length?`<div style="display:flex;flex-direction:column;gap:4px;margin:3px 0 6px">${pr.map(p=>promHtml(p,false)).join('')}</div>`:''}
-        ${conf.map(c=>`<div class="wd-r"><span class="c">${esc(c.nome)}</span><span class="f">${riassuntoFormati(c)||'—'}</span><span class="n">${esc(c.note_ord)}</span></div>`).join('')}
+        ${conf.map(c=>`<div class="wd-r"><span class="c">${esc(c.nome)}</span><span class="f">${riassuntoFormati(c)||'—'}</span><span class="n">${esc([c.note_ci,c.note_ord].filter(Boolean).join(' · '))}</span></div>`).join('')}
       </div>`;
     }).join('');
     const tit=`Settimana ${fmtD(w)} – ${fmtD(addGiorni(w,5))}`;
@@ -2140,7 +2152,6 @@ function openCliente(nome){
   document.getElementById('cl-tit').textContent=nome?'Scheda cliente':'Nuovo cliente';
   document.getElementById('cl-nome').value=c.nome;
   document.getElementById('cl-prov').value=c.prov;
-  document.getElementById('cl-nc').value=c.note_conf;
   document.getElementById('cl-doc').value=a.documento||'';
   document.getElementById('cl-ct').value=a.contatto||'';
   document.getElementById('cl-cons').value=a.consegna||'';
@@ -2216,7 +2227,8 @@ async function salvaCliente(){
   if(!nome){avviso('Inserisci il nome del cliente');return}
   if(elencoClienti().some(c=>c.nome!==CL_ORIG&&c.nome.toLowerCase()===nome.toLowerCase())){avviso('Esiste già un cliente chiamato "'+nome+'"');return}
   const prov=document.getElementById('cl-prov').value.trim().toUpperCase();
-  const note_conf=document.getElementById('cl-nc').value.trim();
+  // la nota di confezionamento non è più nella scheda: le note per il biglietto si scrivono nella colonna Note CI dell'ordine
+  const note_conf='';
   const pagamento=document.getElementById('cl-pag').value;
   const documento=document.getElementById('cl-doc').value.trim().replace(/\s+/g,' ').toUpperCase().replace(/^SCONTRINO$/,'SCO');
   const listino=document.getElementById('cl-listino').value;
@@ -2336,7 +2348,7 @@ function stampaReport(){
     }).join('');
     return`<div class="rz-head">${esc(z.nome)}</div>
 <table class="rt"><colgroup><col style="width:20%"><col style="width:13%"><col style="width:5%"><col style="width:8%"><col style="width:10%"><col style="width:8%"><col style="width:12%"><col style="width:9%"><col style="width:15%"></colgroup>
-<thead><tr><th>Cliente</th><th>Ordine</th><th class="n">Uova</th><th class="n">Importo</th><th class="c">Pag.</th><th class="c">Documento</th><th>Note ordine</th><th class="c hw">Importo incassato</th><th class="hw">Note autista / ufficio</th></tr></thead>
+<thead><tr><th>Cliente</th><th>Ordine</th><th class="n">Uova</th><th class="n">Importo</th><th class="c">Pag.</th><th class="c">Documento</th><th>Note autisti</th><th class="c hw">Importo incassato</th><th class="hw">Note autista / ufficio</th></tr></thead>
 <tbody>${righe}</tbody>
 <tfoot><tr class="ztot"><td colspan="2">Totale ${esc(z.nome)}</td><td class="n">${zTot.u.toLocaleString('it')}</td><td class="n">${eur(zTot.imp)}</td><td colspan="5"></td></tr></tfoot>
 </table>`;
@@ -2583,7 +2595,7 @@ function biglietto(c,lotto){
     ${c.colli?`<div class="bb">Colli: ${c.colli}</div>`:''}
     ${gdo?`<div class="bb">GDO · ${gdo}</div>`:''}
     ${c.note_conf?`<div class="bnote">${esc(c.note_conf)}</div>`:''}
-    ${c.note_ord?`<div class="bnote">${esc(c.note_ord)}</div>`:''}
+    ${c.note_ci?`<div class="bnote">${esc(c.note_ci)}</div>`:''}
   </div>`;
 }
 // stampa dei biglietti sulla stampante termica da 80 mm: un biglietto per pagina, sempre in verticale e senza margini,
@@ -3539,11 +3551,12 @@ async function avvia(){
   const scr=applicaScrive1();
   const nc0=svuotaNoteConf1();
   const ind1=applicaIndirizzi1();
+  const nci=noteInCi1();
   const rq=riequilibraLotti();
   const fx=riempiFissiGiorni();
   buildAna();buildWeekNav();buildDtabs();
   render();
-  if(daBackup||fx||xl46||lt46||xl47||lt47||ct1||pv1||xl47b||lt47b||mar47||xl47e||sco||scr||nc0||ind1||rq)sync(); // porta subito al server i dati nuovi
+  if(daBackup||fx||xl46||lt46||xl47||lt47||ct1||pv1||xl47b||lt47b||mar47||xl47e||sco||scr||nc0||ind1||nci||rq)sync(); // porta subito al server i dati nuovi
 }
 // ── INIT ──
 let _auth=null;try{_auth=ST.getItem('slv_ord_auth')}catch(e){}
