@@ -770,7 +770,7 @@ tr.intestazione-row:first-child td{border-top:0}
   <div class="modal">
     <h3>Nuovo lotto</h3>
     <div class="frow"><label>Nome o codice del lotto</label><input type="text" id="nl-nome" placeholder="es. P1 0911, Altobello 10/11..."></div>
-    <div class="frow"><label>Lotto (data di scadenza)</label><input type="date" id="nl-scad" style="max-width:220px"></div>
+    <div class="frow"><label>Lotto/TMC</label><input type="date" id="nl-scad" style="max-width:220px"></div>
     <div style="display:flex;gap:12px">
       <div class="frow" style="flex:1"><label>Data arrivo</label><input type="date" id="nl-data"></div>
       <div class="frow" style="flex:1"><label>Uova in ingresso</label><input type="number" min="0" step="1" id="nl-uova" placeholder="es. 15000"></div>
@@ -838,7 +838,7 @@ tr.intestazione-row:first-child td{border-top:0}
     <h3>Modifica lotto</h3>
     <input type="hidden" id="el-id">
     <div class="frow"><label>Nome o codice del lotto</label><input type="text" id="el-nome"></div>
-    <div class="frow"><label>Lotto (data di scadenza)</label><input type="date" id="el-scad" style="max-width:220px"></div>
+    <div class="frow"><label>Lotto/TMC</label><input type="date" id="el-scad" style="max-width:220px"></div>
     <div style="display:flex;gap:12px">
       <div class="frow" style="flex:1"><label>Data arrivo</label><input type="date" id="el-data"></div>
       <div class="frow" style="flex:1"><label>Uova in ingresso</label><input type="number" min="0" step="1" id="el-uova"></div>
@@ -2811,7 +2811,7 @@ function renderLotti(){
     return`<div class="lotto-card${inUso?' uso':''}${l.rem<=0?' esaurito':''}">
       <div class="lotto-head" style="margin-bottom:10px;align-items:center">
         <div class="ldot" style="background:${l.col};margin-top:0"></div>
-        <div><div class="lnome">${esc(l.nome)}</div><div class="lscad${l.scadenza?'':' manca'}">${l.scadenza?'Lotto / scadenza '+fmtD(l.scadenza):'⚠ manca il lotto (scadenza)'}</div><div class="lsub">arrivato il ${l.data?fmtD(l.data):'—'}${l.note?' · '+esc(l.note):''}</div></div>
+        <div><div class="lnome">${esc(l.nome)}</div><div class="lscad${l.scadenza?'':' manca'}">${l.scadenza?'Lotto/TMC: '+fmtD(l.scadenza):'⚠ manca il lotto/TMC'}</div><div class="lsub">arrivato il ${l.data?fmtD(l.data):'—'}${l.note?' · '+esc(l.note):''}</div></div>
         ${inUso?'<span class="luso">in uso</span>':''}
       </div>
       <div class="lrem ${cls}">${l.rem<=0?'Esaurito':fmtU(l.rem)}${l.rem>0?'<small>uova rimaste</small>':''}</div>
@@ -2826,7 +2826,7 @@ function renderLotti(){
     </div>`;}).join(''):'<div style="color:var(--bark);padding:20px;font-size:13px">Nessun lotto aperto. Premi "+ Nuovo lotto" quando arriva un carico.</div>';
   const ch=tutti.filter(l=>l.chiuso).sort((x,y)=>(x.data||'')<(y.data||'')?1:-1);
   document.getElementById('lotti-arch').innerHTML=ch.length?`<div class="wk-sec">Lotti chiusi</div>
-    <table class="ct" style="background:var(--white);border:1.5px solid var(--tan);border-radius:9px;overflow:hidden"><thead><tr><th>Lotto</th><th>Scadenza</th><th>Arrivo</th><th>Uova entrate</th><th>Uova usate</th><th>Differenza</th><th></th></tr></thead><tbody>
+    <table class="ct" style="background:var(--white);border:1.5px solid var(--tan);border-radius:9px;overflow:hidden"><thead><tr><th>Lotto</th><th>Lotto/TMC</th><th>Arrivo</th><th>Uova entrate</th><th>Uova usate</th><th>Differenza</th><th></th></tr></thead><tbody>
     ${ch.map(l=>`<tr style="cursor:default"><td class="nm">${esc(l.nome)}</td><td>${l.scadenza?fmtD(l.scadenza):'—'}</td><td>${l.data?fmtD(l.data):'—'}</td><td>${fmtU(l.tot)}</td><td>${fmtU(l.used)}</td>
       <td style="color:${l.rem===0?'var(--moss)':'var(--rust)'}">${l.rem===0?'pari':(l.rem>0?'+':'')+fmtU(l.rem)+' uova'}</td>
       <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="riapriLotto('${l.id}')">Riapri</button> <button class="btn btn-ghost btn-sm bdel" onclick="eliminaLotto('${l.id}')" title="Elimina lotto">🗑 Elimina</button></td></tr>`).join('')}
@@ -2855,7 +2855,7 @@ function salvaLotto(){
   const uova=parseInt(document.getElementById('nl-uova').value)||0;
   if(!uova){avviso('Inserisci il numero di uova in ingresso');return}
   const scadenza=document.getElementById('nl-scad').value;
-  if(!scadenza){avviso('Inserisci il lotto, cioè la data di scadenza');return}
+  if(!scadenza){avviso('Inserisci il lotto/TMC');return}
   const L=getLotti();const id='l'+Date.now();
   const uso=document.getElementById('nl-uso').checked;
   if(uso)L.forEach(l=>l.uso=false);
