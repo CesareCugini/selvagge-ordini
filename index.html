@@ -958,13 +958,19 @@ function segnaOmaggi(lista){let z='';(lista||[]).forEach(c=>{if(c.intestazione){
 // le righe aggiuntive di un cliente (una per lotto) stanno sempre subito sotto la sua riga principale
 function raggruppaSplit(lista){
   if(!lista||!lista.some(c=>c.split))return lista;
-  const split=lista.filter(c=>c.split);const base=lista.filter(c=>!c.split);
-  const out=[];
-  const usate=new Set();
-  base.forEach(c=>{out.push(c);if(!c.intestazione)split.filter(s=>s.nome===c.nome&&!!s.fp===!!c.fp&&!usate.has(s)).forEach(s=>{usate.add(s);out.push(s)})});
-  split.filter(s=>!usate.has(s)&&base.some(c=>!c.intestazione&&c.nome===s.nome)).forEach(s=>{const i=out.findIndex(c=>!c.intestazione&&!c.split&&c.nome===s.nome);usate.add(s);out.splice(i+1,0,s)});
-  // righe aggiuntive rimaste senza cliente principale: restano in fondo
-  split.filter(s=>!usate.has(s)).forEach(s=>{delete s.split;out.push(s)});
+  // una riga di lotto è al suo posto se sta subito sotto una riga dello stesso cliente:
+  // così, se lo stesso cliente compare più volte nel giorno, ogni riga tiene i suoi lotti
+  const alPosto=(l,i)=>{const p=l[i-1];return !!p&&!p.intestazione&&p.nome===l[i].nome};
+  if(!lista.some((c,i)=>c.split&&!alPosto(lista,i)))return lista;
+  const out=[],orfane=[];
+  lista.forEach(c=>{if(c.split){const p=out[out.length-1];if(p&&!p.intestazione&&p.nome===c.nome)out.push(c);else orfane.push(c)}else out.push(c)});
+  orfane.forEach(s=>{
+    let i=out.findIndex(c=>!c.intestazione&&!c.split&&c.nome===s.nome&&!!c.fp===!!s.fp);
+    if(i<0)i=out.findIndex(c=>!c.intestazione&&!c.split&&c.nome===s.nome);
+    if(i<0){delete s.split;out.push(s);return} // senza cliente principale: resta in fondo come riga normale
+    let j=i+1;while(j<out.length&&out[j].split&&out[j].nome===s.nome)j++;
+    out.splice(j,0,s);
+  });
   lista.splice(0,lista.length,...out);return lista;
 }
 function setG(g,lista,noTs){raggruppaSplit(lista);segnaOmaggi(lista);const a=LS.g('slv_ord_v1',{});if(!a[SETT])a[SETT]={};a[SETT][g]=lista;if(!noTs)a[SETT]._ts=Date.now();LS.s('slv_ord_v1',a)}
@@ -1580,7 +1586,7 @@ function distribuisciRiga(lista,c){
   const resto={};FORMATI.forEach(f=>{if(serve[f]>0)resto[f]=serve[f]});
   const mancano=totUova({formati:resto});if(mancano)parti.push(['',resto]);
   c.formati=parti[0][1];c.lotto=parti[0][0];
-  parti.slice(1).forEach(([id,q])=>lista.push({nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',note_ord:'',formati:q,lotto:id,lotto_man:false,stampato:false,fp:!!c.fp,split:true,split_auto:true,pagamento:c.pagamento||'',...(c.tipo_om?{tipo_om:c.tipo_om}:{}),...(c.zona_cons?{zona_cons:c.zona_cons}:{})}));
+  parti.slice(1).forEach(([id,q])=>inserisciSplit(lista,c,{nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',note_ord:'',formati:q,lotto:id,lotto_man:false,stampato:false,fp:!!c.fp,split:true,split_auto:true,pagamento:c.pagamento||'',...(c.tipo_om?{tipo_om:c.tipo_om}:{}),...(c.zona_cons?{zona_cons:c.zona_cons}:{})}));
   raggruppaSplit(lista);setG(GG,lista);
   return {parti,mancano};
 }
@@ -1599,7 +1605,11 @@ function setL(idx,lottoId){const lista=initG(GG);const c=lista[idx];
   c.lotto=lottoId;c.lotto_man=!!lottoId;if(c.split_auto)delete c.split_auto;setG(GG,lista);render()}
 function setPag(idx,val){const lista=initG(GG);const n=lista[idx].nome;lista.forEach(c=>{if(!c.intestazione&&c.nome===n)c.pagamento=val});setG(GG,lista);if(lista.some(c=>c.split&&c.nome===n))render()}
 // toglie le righe aggiuntive di un cliente
+// mette una riga di lotto subito sotto la riga c e le sue altre righe di lotto
+function inserisciSplit(lista,c,r){let k=lista.indexOf(c);if(k<0){lista.push(r);return}k++;while(k<lista.length&&lista[k].split&&lista[k].nome===c.nome)k++;lista.splice(k,0,r)}
 function togliSplit(lista,nome){for(let i=lista.length-1;i>=0;i--)if(lista[i].split&&lista[i].nome===nome)lista.splice(i,1)}
+// dopo aver tolto la riga in posizione idx: toglie solo le righe di lotto che stavano subito sotto di lei, non quelle di altre righe dello stesso cliente
+function togliSplitDi(lista,idx,nome){while(idx<lista.length&&lista[idx].split&&lista[idx].nome===nome)lista.splice(idx,1)}
 // aggiunge sotto il cliente una riga per un altro lotto
 function dividiLotto(idx){
   const lista=initG(GG);const c=lista[idx];
@@ -1703,12 +1713,12 @@ async function eliminaCliente(idx){
     lista.splice(idx,1);setG(GG,lista);render();return;
   }
   if(c.fp){if(!await chiedi('Togliere "'+c.nome+'" (fuori programma) da '+GG+'?','Togli'))return;
-    lista.splice(idx,1);togliSplit(lista,c.nome);setG(GG,lista);buildDtabs();render();return}
+    lista.splice(idx,1);togliSplitDi(lista,idx,c.nome);setG(GG,lista);buildDtabs();render();return}
   const ord=totUova(c)>0?'\n\nAttenzione: in questa settimana ha già un ordine, che verrà cancellato.':'';
   if(!await chiedi('Eliminare definitivamente "'+c.nome+'" dal '+GG.toLowerCase()+'?\n\nNon comparirà più in questo giorno, nemmeno nelle prossime settimane. Gli altri giorni non cambiano e il cliente resta nell\'anagrafica Clienti.'+ord))return;
   // resta in anagrafica, così si può riassegnare dalla scheda Clienti
   const an=getAnag();if(!an[c.nome]){an[c.nome]={prov:c.prov||'',note_conf:c.note_conf||''};setAnag(an)}
-  lista.splice(idx,1);togliSplit(lista,c.nome);setG(GG,lista);
+  lista.splice(idx,1);togliSplitDi(lista,idx,c.nome);setG(GG,lista);
   togliDaGiro(c.nome,GG); // giro permanente e settimane future già aperte
   SEL.delete(c.nome);buildAna();buildDtabs();render();
 }
@@ -1771,10 +1781,10 @@ async function salvaSposta(){
   const da=initG(GG);const c=da[SP_IDX];
   const dest=initG(g);
   if(dest.some(x=>!x.intestazione&&x.nome===c.nome)){if(!await chiediSiNo('"'+c.nome+'" è già presente nel giro di '+g+'.\n\nVuoi spostarlo comunque?'))return}
-  const righe=da.filter(x=>x.split&&x.nome===c.nome); // le righe degli altri lotti seguono il cliente
+  const righe=[];for(let k=SP_IDX+1;k<da.length&&da[k].split&&da[k].nome===c.nome;k++)righe.push(da[k]); // le righe degli altri lotti di questa riga seguono il cliente
   const fx=c.fp?null:fissoDi(GG,c.nome); // anche l'ordine fisso segue il cliente nel nuovo giorno
-  da.splice(SP_IDX,1);togliSplit(da,c.nome);setG(GG,da);if(!c.fp)syncTpl(GG,da);
-  c.stampato=false;inserisciInZona(dest,c,zona);righe.forEach(r=>{r.stampato=false;dest.push(r)});setG(g,dest);if(!c.fp)syncTpl(g,dest);
+  da.splice(SP_IDX,1+righe.length);setG(GG,da);if(!c.fp)syncTpl(GG,da);
+  c.stampato=false;inserisciInZona(dest,c,zona);{const k=dest.indexOf(c);righe.forEach((r,n)=>{r.stampato=false;dest.splice(k+1+n,0,r)})}setG(g,dest);if(!c.fp)syncTpl(g,dest);
   if(fx)setFisso(g,c.nome,fx.fisso,fx.fisso_nota);
   closeM('m-sposta');buildDtabs();render();
 }
@@ -1783,7 +1793,7 @@ function toggleNascosto(idx){
   if(lista[idx].intestazione)return;
   lista[idx].nascosto=!lista[idx].nascosto;
   // se nascondo, azzero anche l'ordine e tolgo le righe degli altri lotti
-  if(lista[idx].nascosto){lista[idx].formati={};lista[idx].lotto='';lista[idx].stampato=false;togliSplit(lista,lista[idx].nome);}
+  if(lista[idx].nascosto){lista[idx].formati={};lista[idx].lotto='';lista[idx].stampato=false;togliSplitDi(lista,idx+1,lista[idx].nome);}
   setG(GG,lista);buildDtabs();render();
 }
 
@@ -1994,7 +2004,7 @@ async function assegnaLotti(){
   // 1. le divisioni fatte in automatico in precedenza tornano nella riga principale
   for(let i=lista.length-1;i>=0;i--){
     const r=lista[i];if(!r.split||!r.split_auto||r.stampato)continue;
-    const m=lista.find(x=>!x.intestazione&&!x.split&&x.nome===r.nome);
+    let m=null;for(let j=i-1;j>=0;j--){const x=lista[j];if(x.intestazione||x.nome!==r.nome)break;if(!x.split){m=x;break}} // la riga principale subito sopra
     if(!m||bloccata(m))continue;
     FORMATI.forEach(f=>{if(r.formati[f])m.formati[f]=(m.formati[f]||0)+r.formati[f]});
     lista.splice(i,1);
@@ -2020,7 +2030,7 @@ async function assegnaLotti(){
     if(!parti.length)return;
     c.formati=parti[0][1];c.lotto=parti[0][0];c.lotto_man=false;
     parti.slice(1).forEach(([id,q])=>{divise++;
-      lista.push({nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',note_ord:'',formati:q,lotto:id,lotto_man:false,stampato:false,fp:!!c.fp,split:true,split_auto:true,pagamento:c.pagamento||'',...(c.tipo_om?{tipo_om:c.tipo_om}:{}),...(c.zona_cons?{zona_cons:c.zona_cons}:{})})});
+      inserisciSplit(lista,c,{nome:c.nome,prov:c.prov||'',note_conf:c.note_conf||'',note_ord:'',formati:q,lotto:id,lotto_man:false,stampato:false,fp:!!c.fp,split:true,split_auto:true,pagamento:c.pagamento||'',...(c.tipo_om?{tipo_om:c.tipo_om}:{}),...(c.zona_cons?{zona_cons:c.zona_cons}:{})})});
   });
   setG(GG,lista);buildDtabs();render();
   const nomi=Object.fromEntries(getLotti().map(l=>[l.id,l.nome]));
